@@ -51,24 +51,39 @@ static_block1=world.CreateStaticBody(
 dynamic_body=world.CreateDynamicBody(position=(10,15), angle=15)
 
 # And add a box fixture onto it (with a nonzero density, so it will move)
-box=dynamic_body.CreatePolygonFixture(box=(2,1), density=1, friction=0.3)
+box=dynamic_body.CreatePolygonFixture(box=(2,1), density=3, friction=0.3)
 
 colors = {
     staticBody  : (255,255,255,255),
     dynamicBody : (127,127,127,255),
 }
 
+staticBodies = []
+dynamicBodies = []
+
 running=True
+
+def addStaticBodyToContainer(staticBody):
+	global staticBodies
+	staticBodies.append(staticBody)
+	
+def addDynamicBodyToContainer(dynamicBody):
+	global dynamicBodies
+	dynamicBodies.append(dynamicBody)
 
 def main():
 	global world
-	global ground_body
-	global dynamic_body
+#	global ground_body
+#	global dynamic_body
 	global TIME_STEP
 	global PPM
 	global running
-	global vel_iters
-	global pos_iters
+	
+	for body in world.bodies:
+		if body.type==staticBody:
+			addStaticBodyToContainer(body)
+		elif body.type==dynamicBody:
+			addDynamicBodyToContainer(body)
 	
 	while running:
 		#Check the event queue
@@ -78,7 +93,7 @@ def main():
 				running=False
 		screen.fill((0,0,0,0))
 		# Draw the world
-		for body in (world.bodies): #or world.bodies
+		for body in (world.bodies): # all bodies in world
 			# The body gives us the position and angle of its shapes
 			for fixture in body.fixtures:
 				# The fixture hold information like density and friction,
