@@ -73,13 +73,9 @@ def addDynamicBodyToContainer(dynamicBody):
 
 def main():
 	global world
-#	global ground_body
-#	global dynamic_body
 	global TIME_STEP
 	global PPM
 	global running
-#	global vel_iters
-#	global pos_iters
 	
 	for body in world.bodies:
 		if body.type==staticBody:

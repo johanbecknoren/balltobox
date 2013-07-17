@@ -72,9 +72,9 @@ def addDynamicBodyToContainer(dynamicBody):
 	dynamicBodies.append(dynamicBody)
 
 def main():
-	global world
-#	global ground_body
-#	global dynamic_body
+	global world # Box2D world object
+	global staticBodies # Container for all static bodies in world
+	global dynamicBodies # Container for all dynamic bodies in world
 	global TIME_STEP
 	global PPM
 	global running
