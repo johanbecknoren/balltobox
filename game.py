@@ -54,6 +54,7 @@ pauseSimulation = 0 # Boolean to pause Box2d physics simulation
 running=True	# Main game loop
 displayMenu=True	# Boolean for showing menu
 theMouseJoint = ""	# Mousejoint for grabbing dynamic objects (as b2MouseJoint later)
+mouseJoint = False  # bool that tells if a mouse joint is active
 colors = {
     staticBody  : (255,255,255,255),
     dynamicBody : (127,127,127,255),
@@ -84,9 +85,20 @@ def checkContacts():
 	for contact in world.contacts:
 		fixA = contact.fixtureA
 		fixB = contact.fixtureB
+		# Check if ball reached goal.
 		if fixA.body.userData=='ball' or fixB.body.userData=='ball':
 			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
-				return True
+				return 'goal'
+		elif fixA.body.userData=='static_obstacle_1':
+			print contact.tangentSpeed
+			contact.tangentSpeed = 5.0
+		"""
+		elif fixB.body.userData=='static_obstacle_1':
+			print 'conveyor belt!'
+			contact.fixtureA.tangentspeed = -50.0
+		"""
+			
+	return
 
 # Initialize Menu
 def initMenu():
@@ -143,10 +155,9 @@ def runIntro():
 			introFrameCounter=introFrameCounter+1
 	print 'Intro'
 
-# Handle keyboard and mouse (?) events from pygame
+# Handle keyboard and mouse events from pygame
 def event_handler():
-	global running,pauseSimulation,dynamicBodies,staticBodies,theMouseJoint
-	mouseJoint = False
+	global running,pauseSimulation,dynamicBodies,staticBodies,theMouseJoint,mouseJoint
 	theBody = dynamicBodies[0] # Placeholder
 	groundBody = staticBodies[0] # Placeholder
 	
@@ -165,7 +176,6 @@ def event_handler():
 		if event.type==MOUSEBUTTONDOWN:
 			# - Kontrollera om klick på dynamic body
 			# - Skapa b2MouseJoint
-			mouseJoint=True
 			mouseWorldX = pygame.mouse.get_pos()[0]/PPM
 			mouseWorldY = (SCREEN_HEIGHT-pygame.mouse.get_pos()[1])/PPM
 			# Find the ground object body
@@ -173,23 +183,25 @@ def event_handler():
 				if body.userData=='ground':
 					groundBody=body
 					break
-			for body in dynamicBodies:
+			for body in dynamicBodies: #Endast dynamiska bodies ska gå att greppa/flytta med musen
 				for fixture in body.fixtures:
 					if fixture.TestPoint((mouseWorldX, mouseWorldY)):
 						print 'Clicked on dynamic body: '+body.userData
-						if 1:#body.userData != 'ball':
+						if body.userData != 'ball':
+							mouseJoint=True
 							theBody = body
 							# Skapa b2MouseJoint här
+							print 'Creating MouseJoint'
 							theMouseJoint=world.CreateMouseJoint(
 								bodyA=groundBody,
 								bodyB=theBody,
 								active=True,
-								maxForce=100,
+								maxForce=300,
 								target=(mouseWorldX,mouseWorldY),
 								collideConnected=True)
 							break
 			
-		if pygame.mouse.get_pressed()[0]:
+		if event.type==MOUSEMOTION:
 			if mouseJoint==True:
 				mouseWorldX = pygame.mouse.get_pos()[0]/PPM
 				mouseWorldY = (SCREEN_HEIGHT-pygame.mouse.get_pos()[1])/PPM
@@ -197,17 +209,13 @@ def event_handler():
 				#Gör saker med b2MouseJoint här
 				
 		if event.type==MOUSEBUTTONUP:
-			mouseJoint=False
-			theMouseJoint.SetActive=False
-#			world.DestroyJoint(theMouseJoint)
+			if mouseJoint==True:
+				print 'Destroying MouseJoint'
+				theMouseJoint.SetActive=False
+				world.DestroyJoint(theMouseJoint)
+				mouseJoint=False
 			# Förstör b2MouseJoint här
-				
-	if pygame.mouse.get_pressed()[0]: # If left mouse button pressed
-		pass
-		# 1. Kolla om klick skett på en dynamic body
-		# 2. Skapa en b2MouseJoint
-		# 3. ???
-		# 4. Profit!
+			
 
 # Create Box2D bodies
 def createLevelBodies():
@@ -229,6 +237,7 @@ def createLevelBodies():
 		angle=toRad(-10),
 		shapes=polygonShape(box=(4,1)),
 		density = 0.0,
+		userData='static_obstacle_1'
 		)
 	
 	# Level goal static body
@@ -254,15 +263,16 @@ def createLevelBodies():
 		friction=0.1,
 		density=3.0, 
 		restitution=0.3)
-		
+	
+	# Dynamic obstacle
 	dynamic_obstacle=world.CreateDynamicBody(
 		position=(10,7),
 		angle=toRad(-10),
-		userData='dynObstacle',
+		userData='dynamic_obstacle_1',
 		)
 	box=dynamic_obstacle.CreatePolygonFixture(
 		box=(1,0.5),
-		density=10,
+		density=5,
 		friction=1.0)
 
 # --- main function ---
@@ -305,7 +315,7 @@ def main():
 		event_handler()
 
 		# Check ball-goal collision/contact (level completed)
-		if checkContacts() and flipswitch==1:
+		if checkContacts()=='goal' and flipswitch==1:
 			print 'Gooooll!'
 			flipswitch=0
 		
