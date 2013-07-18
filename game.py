@@ -53,15 +53,15 @@ introFrames = 2*TARGET_FPS # Show intro for 2 seconds
 pauseSimulation = 0 # Boolean to pause Box2d physics simulation
 running=True	# Main game loop
 displayMenu=True	# Boolean for showing menu
-
+theMouseJoint = ""	# Mousejoint for grabbing dynamic objects (as b2MouseJoint later)
 colors = {
     staticBody  : (255,255,255,255),
     dynamicBody : (127,127,127,255),
 }
-
 staticBodies = []	# Container for static bodies
 dynamicBodies = []	# Container for dynamic bodies
 
+# --- Functions ---
 # Add static body to container
 def addStaticBodyToContainer(staticBody):
 	global staticBodies
@@ -138,24 +138,76 @@ def runIntro():
 		
 		introFrameCounter=0
 		screen.blit(text, textpos)
-		while introFrameCounter<=120:
+		while introFrameCounter<=60:
 			pygame.display.flip()
 			introFrameCounter=introFrameCounter+1
 	print 'Intro'
 
 # Handle keyboard and mouse (?) events from pygame
 def event_handler():
-	global running,pauseSimulation
+	global running,pauseSimulation,dynamicBodies,staticBodies,theMouseJoint
+	mouseJoint = False
+	theBody = dynamicBodies[0] # Placeholder
+	groundBody = staticBodies[0] # Placeholder
+	
+	# Keyboard events
 	for event in pygame.event.get():
 		if event.type==QUIT or (event.type==KEYUP and event.key==K_ESCAPE):
 			# User closed the window or pressed escape
 			running=False
-		if event.type==KEYDOWN and event.key==K_o:
+		elif event.type==KEYDOWN and event.key==K_o:
 			# Pause/unpause simulation
 			if pauseSimulation == 1:
 				pauseSimulation = 0
 			else:
 				pauseSimulation = 1
+				
+		if event.type==MOUSEBUTTONDOWN:
+			# - Kontrollera om klick på dynamic body
+			# - Skapa b2MouseJoint
+			mouseJoint=True
+			mouseWorldX = pygame.mouse.get_pos()[0]/PPM
+			mouseWorldY = (SCREEN_HEIGHT-pygame.mouse.get_pos()[1])/PPM
+			# Find the ground object body
+			for body in staticBodies:
+				if body.userData=='ground':
+					groundBody=body
+					break
+			for body in dynamicBodies:
+				for fixture in body.fixtures:
+					if fixture.TestPoint((mouseWorldX, mouseWorldY)):
+						print 'Clicked on dynamic body: '+body.userData
+						if 1:#body.userData != 'ball':
+							theBody = body
+							# Skapa b2MouseJoint här
+							theMouseJoint=world.CreateMouseJoint(
+								bodyA=groundBody,
+								bodyB=theBody,
+								active=True,
+								maxForce=100,
+								target=(mouseWorldX,mouseWorldY),
+								collideConnected=True)
+							break
+			
+		if pygame.mouse.get_pressed()[0]:
+			if mouseJoint==True:
+				mouseWorldX = pygame.mouse.get_pos()[0]/PPM
+				mouseWorldY = (SCREEN_HEIGHT-pygame.mouse.get_pos()[1])/PPM
+				theMouseJoint.target=(mouseWorldX, mouseWorldY)
+				#Gör saker med b2MouseJoint här
+				
+		if event.type==MOUSEBUTTONUP:
+			mouseJoint=False
+			theMouseJoint.SetActive=False
+#			world.DestroyJoint(theMouseJoint)
+			# Förstör b2MouseJoint här
+				
+	if pygame.mouse.get_pressed()[0]: # If left mouse button pressed
+		pass
+		# 1. Kolla om klick skett på en dynamic body
+		# 2. Skapa en b2MouseJoint
+		# 3. ???
+		# 4. Profit!
 
 # Create Box2D bodies
 def createLevelBodies():
@@ -168,6 +220,7 @@ def createLevelBodies():
 		position=(0,1),
 		shapes=polygonShape(box=(50,1)),
 		density=0.0,
+		userData='ground'
 		)
 	
 	# Level obstacle static body
@@ -195,8 +248,6 @@ def createLevelBodies():
 		userData="ball",
 		shapes=circleShape(radius=1))
 
-	# And add a box fixture onto it (with a nonzero density, so it will move)
-	#box=dynamic_body.CreatePolygonFixture(box=(2,1), density=3, friction=0.3, restitution=0.3)
 	# Add circle fixture to ball body, with non-zero density so it will move.
 	circle=dynamic_body.CreateCircleFixture(
 		radius=1.0, 
@@ -207,13 +258,14 @@ def createLevelBodies():
 	dynamic_obstacle=world.CreateDynamicBody(
 		position=(10,7),
 		angle=toRad(-10),
+		userData='dynObstacle',
 		)
 	box=dynamic_obstacle.CreatePolygonFixture(
 		box=(1,0.5),
 		density=10,
 		friction=1.0)
 
-# main function
+# --- main function ---
 def main():
 	global world # Box2D world object
 	global staticBodies # Container for all static bodies in world
@@ -301,6 +353,7 @@ def main():
 			
 		clock.tick(TARGET_FPS)
 		pygame.display.flip()
+		pygame.event.pump()	# Keep event queue updated
 	pygame.quit()
 	print('Done!')
 main()
