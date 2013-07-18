@@ -6,6 +6,10 @@
  Johan Beck-Norén, jobe4452
  Ubuntu 12.10
  Python 2.7
+External modules used:
+ 	pygame
+ 	pyBox2D
+ 	menu_key
 """
 
 import os, sys
@@ -16,7 +20,7 @@ from pygame.locals import *
 from Box2D.b2 import *
 from Box2D import *
 #from menu_key import *
-from menu import *
+from menu import *	# menu_key module from pygame.org/project-menu_key-2278-.html
 
 if not pygame.font: print "Warning, fonts disabled."
 if not pygame.mixer: print "Warning, sound disabled."
@@ -44,31 +48,35 @@ clock=pygame.time.Clock()
 world=world(gravity=(0,-9.82),doSleep=True)
 
 # --- Game variables ---
-*introMenu = Menu()
+menu = Menu()
 introFrames = 2*TARGET_FPS # Show intro for 2 seconds
 pauseSimulation = 0 # Boolean to pause Box2d physics simulation
+running=True	# Main game loop
+displayMenu=True	# Boolean for showing menu
 
 colors = {
     staticBody  : (255,255,255,255),
     dynamicBody : (127,127,127,255),
 }
 
-staticBodies = []
-dynamicBodies = []
+staticBodies = []	# Container for static bodies
+dynamicBodies = []	# Container for dynamic bodies
 
-running=True	# Main game loop
-
+# Add static body to container
 def addStaticBodyToContainer(staticBody):
 	global staticBodies
 	staticBodies.append(staticBody)
-	
+
+# Add static body to container
 def addDynamicBodyToContainer(dynamicBody):
 	global dynamicBodies
 	dynamicBodies.append(dynamicBody)
 	
+# Convert degree to radian
 def toRad(degree):
 	return degree*(3.1415/180.0)
-	
+
+# Check for collisions between specific objects
 def checkContacts():
 	global world
 	
@@ -80,11 +88,49 @@ def checkContacts():
 			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
 				return True
 
+# Initialize Menu
+def initMenu():
+	global menu,screen
+	menu.init(['Start','Information','Quit'], screen)
+	
+# Display Menu
+def runMenu():
+	global menu,screen,displayMenu
+	screen.fill((51,51,51))
+	menu.draw()
+	
+	pygame.key.set_repeat(199,69)#(delay,interval)
+	pygame.display.update()
+	while 1:
+		for event in pygame.event.get():
+			if event.type == KEYDOWN:
+				if event.key == K_UP:
+					menu.draw(-1) #here is the Menu class function
+				if event.key == K_DOWN:
+					menu.draw(1) #here is the Menu class function
+				if event.key == K_RETURN:
+					if menu.get_position() == 0:
+						print 'Start the game!'
+						displayMenu=False # Deactivate menu
+						screen.fill((0,0,0,0)) # Blank screen
+						return	# Exit menu function
+					elif menu.get_position() == 1:
+						print 'Show game instructions!'
+					elif menu.get_position() == 2:#here is the Menu class function
+						pygame.display.quit()
+						sys.exit()                        
+				if event.key == K_ESCAPE:
+					pygame.display.quit()
+					sys.exit()
+				pygame.display.update()
+			elif event.type == QUIT:
+				pygame.display.quit()
+				sys.exit()
+		pygame.time.wait(8)
+
+# Display game intro
 def runIntro():
 	global SCREEN_WIDTH, SCREEN_HEIGHT
-#	print '('+str(SCREEN_WIDTH)+', '+str(SCREEN_HEIGHT)+')'
-#	background=pygame.Surface((SCREEN_WIDTH,SCREEN_HEIGHT))
-#	background=background.convert()
 	if pygame.font:
 		font=pygame.font.Font(None, 48)
 		text=font.render("Ball-in-box",1,(255,255,255,255))
@@ -95,12 +141,9 @@ def runIntro():
 		while introFrameCounter<=120:
 			pygame.display.flip()
 			introFrameCounter=introFrameCounter+1
-#		sleep(1.5)
-	else:
-		print 'NO FONT FOR YOU!'
 	print 'Intro'
-#	screen.fill((0,0,0,0))
 
+# Handle keyboard and mouse (?) events from pygame
 def event_handler():
 	global running,pauseSimulation
 	for event in pygame.event.get():
@@ -114,6 +157,7 @@ def event_handler():
 			else:
 				pauseSimulation = 1
 
+# Create Box2D bodies
 def createLevelBodies():
 	# Add file input for body creation here
 	
@@ -159,6 +203,7 @@ def createLevelBodies():
 		density=3.0, 
 		restitution=0.3)
 
+# main function
 def main():
 	global world # Box2D world object
 	global staticBodies # Container for all static bodies in world
@@ -169,6 +214,7 @@ def main():
 	global background
 	global introFrames
 	global pauseSimulation	# Boolean for pausing box2d simulation	
+	global menu
 	
 	flipswitch=1	# To stop printing "Gooooll"
 	introCounter=0	# Counter for displaying intro
@@ -183,41 +229,29 @@ def main():
 		elif body.type==dynamicBody:
 			addDynamicBodyToContainer(body)
 	screen.fill((0,0,0,0))
+	
+	# Show game menu
+	initMenu()
+	runMenu()
+	
+	# Show game intro
 	runIntro()
 
 	# Main game loop
 	while running:
 		#Check the event queue
 		event_handler()
-		"""
-		for event in pygame.event.get():
-			if event.type==QUIT or (event.type==KEYUP and event.key==K_ESCAPE):
-				# User closed the window or pressed escape
-				running=False
-			if event.type==KEYDOWN and event.key==K_o:
-					if pauseSimulation == 1:
-						pauseSimulation = 0
-					else:
-						pauseSimulation = 1
-		"""
 
-		# Check ball-goal collision/contact
+		# Check ball-goal collision/contact (level finished
 		if checkContacts() and flipswitch==1:
 			print 'Gooooll!'
 			flipswitch=0
 		
 		# --- Draw the world ---
 		
-		# Clear screen
+		# Clear the screen
 		screen.fill((0,0,0,0))
-		
-		# Draw intro text
-		"""
-		if introCounter <= introFrames:
-			runIntro()
-			introCounter = introCounter+1
-		"""	
-			
+					
 		for body in (world.bodies): # all bodies in world
 			# The body gives us the position and angle of its shapes
 			for fixture in body.fixtures:
@@ -226,7 +260,6 @@ def main():
 				shape=fixture.shape
 				
 				# Draw the circular ball shape
-#				"""
 				if body.userData=='ball':
 					pygame.draw.circle(
 						screen, (255,0,0,255),
@@ -253,7 +286,6 @@ def main():
 				    	pygame.draw.polygon(screen, (0,255,0,255), vertices, 1)
 				    else:
 				    	pygame.draw.polygon(screen, colors[body.type], vertices, 1)
-#				"""
 		if pauseSimulation==0:
 			world.Step(TIME_STEP, 10, 10)
 			
