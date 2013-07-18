@@ -76,11 +76,20 @@ def createLevelBodies():
 		density = 0.0,
 #		friction=0.5,
 		)
-	
+
+	static_goal=world.CreateStaticBody(
+		position=(18,4),
+		angle=0,
+		shapes=polygonShape(box=(1,1.5)),
+		density=0.0,
+		userData='goal',
+		)
+
 	# Create a dynamic body
 	dynamic_body=world.CreateDynamicBody(
 		position=(10,15),
 		angle=15,
+		angularDamping=3,
 #		friction=0.5,
 #		mass=10,
 #		center=b2Vec2(0,0),
@@ -94,7 +103,7 @@ def createLevelBodies():
 		radius=1.0, 
 		friction=0.1,
 		density=3.0, 
-		restitution=0.0)
+		restitution=0.3)
 
 def main():
 	global world # Box2D world object
@@ -129,7 +138,6 @@ def main():
 				
 				# Draw the circular ball shape
 				if body.userData=='ball':
-					body.angularVelocity = body.angularVelocity*0.95
 					pygame.draw.circle(
 						screen, (255,0,0,255),
 						(int(body.position.x*PPM), 
@@ -151,7 +159,10 @@ def main():
 				    # the y components.
 				    vertices=[(v[0], SCREEN_HEIGHT-v[1]) for v in vertices]
 				    
-				    pygame.draw.polygon(screen, colors[body.type], vertices, 1)
+				    if body.userData=='goal':
+				    	pygame.draw.polygon(screen, (0,255,0,255), vertices, 1)
+				    else:
+				    	pygame.draw.polygon(screen, colors[body.type], vertices, 1)
 	
 		world.Step(TIME_STEP, 10, 10)
 		
