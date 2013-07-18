@@ -9,6 +9,7 @@
 """
 
 import os, sys
+from time import sleep
 import pygame
 from pygame.locals import *
 #import Box2D
@@ -28,13 +29,20 @@ SCREEN_WIDTH, SCREEN_HEIGHT=640,480
 vel_iters, pos_iters = 10, 10
 
 # --- pygame setup ---
+pygame.init()
 screen=pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), 0, 32)
-pygame.display.set_caption('Simple pygame example')
+pygame.display.set_caption('Ball-in-box')
+background=pygame.Surface(screen.get_size())
+background=background.convert()
+background.fill((255,255,255))
 clock=pygame.time.Clock()
 
 # --- pybox2d world setup ---
 # Create the world
 world=world(gravity=(0,-9.82),doSleep=True)
+
+# --- Game variables ---
+introFrames = 2*TARGET_FPS # Show intro for 2 seconds
 
 colors = {
     staticBody  : (255,255,255,255),
@@ -44,7 +52,7 @@ colors = {
 staticBodies = []
 dynamicBodies = []
 
-running=True
+running=True	# Main game loop
 
 def addStaticBodyToContainer(staticBody):
 	global staticBodies
@@ -60,34 +68,51 @@ def toRad(degree):
 def checkContacts():
 	global world
 	
+	# Check of ball in goal
 	for contact in world.contacts:
-		print 'Checking contact!'
 		fixA = contact.fixtureA
 		fixB = contact.fixtureB
 		if fixA.body.userData=='ball' or fixB.body.userData=='ball':
 			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
-				print 'Goal!'
-	
+				return True
+
+def runIntro():
+	global SCREEN_WIDTH, SCREEN_HEIGHT
+#	print '('+str(SCREEN_WIDTH)+', '+str(SCREEN_HEIGHT)+')'
+#	background=pygame.Surface((SCREEN_WIDTH,SCREEN_HEIGHT))
+#	background=background.convert()
+	if pygame.font:
+		font=pygame.font.Font(None, 48)
+		text=font.render("Ball-in-box",1,(255,255,255,255))
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2)
+		screen.blit(text, textpos)
+#		sleep(1.5)
+	else:
+		print 'NO FONT FOR YOU!'
+	print 'Intro'
+#	screen.fill((0,0,0,0))
+
 def createLevelBodies():
 	# Add file input for body creation here
 	
 	global world
-	# And a static body to hold the ground shape
+	
+	# Static body to hold the ground shape
 	ground_body=world.CreateStaticBody(
 		position=(0,1),
 		shapes=polygonShape(box=(50,1)),
 		density=0.0,
-#		friction=0.5,
 		)
-
+	
+	# Level obstacle static body
 	static_block1=world.CreateStaticBody(
 		position=(8,5),
 		angle=-10*(3.1415/180),
 		shapes=polygonShape(box=(4,1)),
 		density = 0.0,
-#		friction=0.5,
 		)
-
+	
+	# Level goal static body
 	static_goal=world.CreateStaticBody(
 		position=(18,4),
 		angle=0,
@@ -96,15 +121,11 @@ def createLevelBodies():
 		userData='goal',
 		)
 
-	# Create a dynamic body
+	# Level ball dynamic body
 	dynamic_body=world.CreateDynamicBody(
 		position=(10,15),
 		angle=15,
 		angularDamping=2,
-#		friction=0.5,
-#		mass=10,
-#		center=b2Vec2(0,0),
-#		I=270,
 		userData="ball",
 		shapes=circleShape(radius=1))
 
@@ -123,26 +144,52 @@ def main():
 	global TIME_STEP
 	global PPM
 	global running
+	global background
+	global introFrames
+	
+	flipswitch=1	# To stop printing "Gooooll"
+	introCounter=0	# Counter for displaying intro
+	pauseSimulation=0	# Boolean for pausing box2d simulation
 	
 	createLevelBodies()
 	
+	# Store bodies in separate containers for static/dynamic
 	for body in world.bodies:
 		if body.type==staticBody:
 			addStaticBodyToContainer(body)
 		elif body.type==dynamicBody:
 			addDynamicBodyToContainer(body)
 
+#	runIntro()
+
+	# Main game loop
 	while running:
 		#Check the event queue
 		for event in pygame.event.get():
-			if event.type==QUIT or (event.type==KEYDOWN and event.key==K_ESCAPE):
+			if event.type==QUIT or (event.type==KEYUP and event.key==K_ESCAPE):
 				# User closed the window or pressed escape
 				running=False
+			if event.type==KEYDOWN and event.key==K_o:
+					if pauseSimulation == 1:
+						pauseSimulation = 0
+					else:
+						pauseSimulation = 1
+
+		# Check ball-goal collision/contact
+		if checkContacts() and flipswitch==1:
+			print 'Gooooll!'
+			flipswitch=0
 		
-		checkContacts()		
+		# --- Draw the world ---
 		
+		# Clear screen
 		screen.fill((0,0,0,0))
-		# Draw the world
+		
+		# Draw intro text
+		if introCounter <= introFrames:
+			runIntro()
+			introCounter = introCounter+1
+			
 		for body in (world.bodies): # all bodies in world
 			# The body gives us the position and angle of its shapes
 			for fixture in body.fixtures:
@@ -151,6 +198,7 @@ def main():
 				shape=fixture.shape
 				
 				# Draw the circular ball shape
+#				"""
 				if body.userData=='ball':
 					pygame.draw.circle(
 						screen, (255,0,0,255),
@@ -177,11 +225,12 @@ def main():
 				    	pygame.draw.polygon(screen, (0,255,0,255), vertices, 1)
 				    else:
 				    	pygame.draw.polygon(screen, colors[body.type], vertices, 1)
-	
-		world.Step(TIME_STEP, 10, 10)
-		
-		pygame.display.flip()
+#				"""
+		if pauseSimulation==0:
+			world.Step(TIME_STEP, 10, 10)
+			
 		clock.tick(TARGET_FPS)
+		pygame.display.flip()
 	pygame.quit()
 	print('Done!')
 main()
