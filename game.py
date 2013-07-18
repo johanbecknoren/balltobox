@@ -15,6 +15,8 @@ from pygame.locals import *
 #import Box2D
 from Box2D.b2 import *
 from Box2D import *
+#from menu_key import *
+from menu import *
 
 if not pygame.font: print "Warning, fonts disabled."
 if not pygame.mixer: print "Warning, sound disabled."
@@ -42,7 +44,9 @@ clock=pygame.time.Clock()
 world=world(gravity=(0,-9.82),doSleep=True)
 
 # --- Game variables ---
+introMenu = Menu()
 introFrames = 2*TARGET_FPS # Show intro for 2 seconds
+pauseSimulation = 0 # Boolean to pause Box2d physics simulation
 
 colors = {
     staticBody  : (255,255,255,255),
@@ -85,12 +89,30 @@ def runIntro():
 		font=pygame.font.Font(None, 48)
 		text=font.render("Ball-in-box",1,(255,255,255,255))
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2)
+		
+		introFrameCounter=0
 		screen.blit(text, textpos)
+		while introFrameCounter<=120:
+			pygame.display.flip()
+			introFrameCounter=introFrameCounter+1
 #		sleep(1.5)
 	else:
 		print 'NO FONT FOR YOU!'
-#	print 'Intro'
+	print 'Intro'
 #	screen.fill((0,0,0,0))
+
+def event_handler():
+	global running,pauseSimulation
+	for event in pygame.event.get():
+		if event.type==QUIT or (event.type==KEYUP and event.key==K_ESCAPE):
+			# User closed the window or pressed escape
+			running=False
+		if event.type==KEYDOWN and event.key==K_o:
+			# Pause/unpause simulation
+			if pauseSimulation == 1:
+				pauseSimulation = 0
+			else:
+				pauseSimulation = 1
 
 def createLevelBodies():
 	# Add file input for body creation here
@@ -146,10 +168,11 @@ def main():
 	global running
 	global background
 	global introFrames
+	global pauseSimulation	# Boolean for pausing box2d simulation	
 	
 	flipswitch=1	# To stop printing "Gooooll"
 	introCounter=0	# Counter for displaying intro
-	pauseSimulation=0	# Boolean for pausing box2d simulation
+
 	
 	createLevelBodies()
 	
@@ -159,12 +182,14 @@ def main():
 			addStaticBodyToContainer(body)
 		elif body.type==dynamicBody:
 			addDynamicBodyToContainer(body)
-
-#	runIntro()
+	screen.fill((0,0,0,0))
+	runIntro()
 
 	# Main game loop
 	while running:
 		#Check the event queue
+		event_handler()
+		"""
 		for event in pygame.event.get():
 			if event.type==QUIT or (event.type==KEYUP and event.key==K_ESCAPE):
 				# User closed the window or pressed escape
@@ -174,6 +199,7 @@ def main():
 						pauseSimulation = 0
 					else:
 						pauseSimulation = 1
+		"""
 
 		# Check ball-goal collision/contact
 		if checkContacts() and flipswitch==1:
@@ -186,9 +212,11 @@ def main():
 		screen.fill((0,0,0,0))
 		
 		# Draw intro text
+		"""
 		if introCounter <= introFrames:
 			runIntro()
 			introCounter = introCounter+1
+		"""	
 			
 		for body in (world.bodies): # all bodies in world
 			# The body gives us the position and angle of its shapes
