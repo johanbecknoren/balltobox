@@ -57,6 +57,17 @@ def addDynamicBodyToContainer(dynamicBody):
 def toRad(degree):
 	return degree*(3.1415/180.0)
 	
+def checkContacts():
+	global world
+	
+	for contact in world.contacts:
+		print 'Checking contact!'
+		fixA = contact.fixtureA
+		fixB = contact.fixtureB
+		if fixA.body.userData=='ball' or fixB.body.userData=='ball':
+			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
+				print 'Goal!'
+	
 def createLevelBodies():
 	# Add file input for body creation here
 	
@@ -77,19 +88,19 @@ def createLevelBodies():
 #		friction=0.5,
 		)
 
-#	static_goal=world.CreateStaticBody(
-#		position=(18,4),
-#		angle=0,
-#		shapes=polygonShape(box=(1,1.5)),
-#		density=0.0,
-#		userData='goal',
-#		)
+	static_goal=world.CreateStaticBody(
+		position=(18,4),
+		angle=0,
+		shapes=polygonShape(box=(1,1.5)),
+		density=0.0,
+		userData='goal',
+		)
 
 	# Create a dynamic body
 	dynamic_body=world.CreateDynamicBody(
 		position=(10,15),
 		angle=15,
-		angularDamping=3,
+		angularDamping=2,
 #		friction=0.5,
 #		mass=10,
 #		center=b2Vec2(0,0),
@@ -127,6 +138,9 @@ def main():
 			if event.type==QUIT or (event.type==KEYDOWN and event.key==K_ESCAPE):
 				# User closed the window or pressed escape
 				running=False
+		
+		checkContacts()		
+		
 		screen.fill((0,0,0,0))
 		# Draw the world
 		for body in (world.bodies): # all bodies in world
