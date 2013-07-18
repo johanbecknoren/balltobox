@@ -54,6 +54,9 @@ def addDynamicBodyToContainer(dynamicBody):
 	global dynamicBodies
 	dynamicBodies.append(dynamicBody)
 	
+def toRad(degree):
+	return degree*(3.1415/180.0)
+	
 def createLevelBodies():
 	# Add file input for body creation here
 	
@@ -81,7 +84,8 @@ def createLevelBodies():
 		shapes=circleShape(radius=1))
 
 	# And add a box fixture onto it (with a nonzero density, so it will move)
-	box=dynamic_body.CreatePolygonFixture(box=(2,1), density=3, friction=0.3, restitution=0.3)
+	#box=dynamic_body.CreatePolygonFixture(box=(2,1), density=3, friction=0.3, restitution=0.3)
+	circle=dynamic_body.CreateCircleFixture(radius=1, friction=0.9,density=3)
 	
 def main():
 	global world # Box2D world object
@@ -116,7 +120,6 @@ def main():
 				shape=fixture.shape
 				
 				if body.userData=='ball':
-#					print body.position.x
 					pygame.draw.circle(
 						screen, (255,0,0,255),
 						(int(body.position.x*PPM), 
