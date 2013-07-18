@@ -173,23 +173,23 @@ def createLevelBodies():
 	# Level obstacle static body
 	static_block1=world.CreateStaticBody(
 		position=(8,5),
-		angle=-10*(3.1415/180),
+		angle=toRad(-10),
 		shapes=polygonShape(box=(4,1)),
 		density = 0.0,
 		)
 	
 	# Level goal static body
 	static_goal=world.CreateStaticBody(
-		position=(18,4),
+		position=(16,4),
 		angle=0,
-		shapes=polygonShape(box=(1,1.5)),
+		shapes=polygonShape(box=(0.5,1.5)),
 		density=0.0,
 		userData='goal',
 		)
 
 	# Level ball dynamic body
 	dynamic_body=world.CreateDynamicBody(
-		position=(10,15),
+		position=(8,15),
 		angle=15,
 		angularDamping=2,
 		userData="ball",
@@ -197,11 +197,21 @@ def createLevelBodies():
 
 	# And add a box fixture onto it (with a nonzero density, so it will move)
 	#box=dynamic_body.CreatePolygonFixture(box=(2,1), density=3, friction=0.3, restitution=0.3)
+	# Add circle fixture to ball body, with non-zero density so it will move.
 	circle=dynamic_body.CreateCircleFixture(
 		radius=1.0, 
 		friction=0.1,
 		density=3.0, 
 		restitution=0.3)
+		
+	dynamic_obstacle=world.CreateDynamicBody(
+		position=(10,7),
+		angle=toRad(-10),
+		)
+	box=dynamic_obstacle.CreatePolygonFixture(
+		box=(1,0.5),
+		density=10,
+		friction=1.0)
 
 # main function
 def main():
@@ -242,7 +252,7 @@ def main():
 		#Check the event queue
 		event_handler()
 
-		# Check ball-goal collision/contact (level finished
+		# Check ball-goal collision/contact (level completed)
 		if checkContacts() and flipswitch==1:
 			print 'Gooooll!'
 			flipswitch=0
@@ -283,7 +293,7 @@ def main():
 				    vertices=[(v[0], SCREEN_HEIGHT-v[1]) for v in vertices]
 				    
 				    if body.userData=='goal':
-				    	pygame.draw.polygon(screen, (0,255,0,255), vertices, 1)
+				    	pygame.draw.polygon(screen, (0,255,0,255), vertices, 0)
 				    else:
 				    	pygame.draw.polygon(screen, colors[body.type], vertices, 1)
 		if pauseSimulation==0:
