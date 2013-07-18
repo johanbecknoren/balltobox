@@ -66,27 +66,36 @@ def createLevelBodies():
 		position=(0,1),
 		shapes=polygonShape(box=(50,1)),
 		density=0.0,
+#		friction=0.5,
 		)
 
 	static_block1=world.CreateStaticBody(
 		position=(8,5),
 		angle=-10*(3.1415/180),
 		shapes=polygonShape(box=(4,1)),
-#		shapes=circleShape(radius=1), # Funkar ej med nuvarande draw med verts.
 		density = 0.0,
+#		friction=0.5,
 		)
 	
 	# Create a dynamic body
 	dynamic_body=world.CreateDynamicBody(
 		position=(10,15),
 		angle=15,
+#		friction=0.5,
+#		mass=10,
+#		center=b2Vec2(0,0),
+#		I=270,
 		userData="ball",
 		shapes=circleShape(radius=1))
 
 	# And add a box fixture onto it (with a nonzero density, so it will move)
 	#box=dynamic_body.CreatePolygonFixture(box=(2,1), density=3, friction=0.3, restitution=0.3)
-	circle=dynamic_body.CreateCircleFixture(radius=1, friction=0.9,density=3)
-	
+	circle=dynamic_body.CreateCircleFixture(
+		radius=1.0, 
+		friction=0.1,
+		density=3.0, 
+		restitution=0.0)
+
 def main():
 	global world # Box2D world object
 	global staticBodies # Container for all static bodies in world
@@ -102,8 +111,7 @@ def main():
 			addStaticBodyToContainer(body)
 		elif body.type==dynamicBody:
 			addDynamicBodyToContainer(body)
-#		print repr(body)
-	
+
 	while running:
 		#Check the event queue
 		for event in pygame.event.get():
@@ -119,7 +127,9 @@ def main():
 				# and also the shape.
 				shape=fixture.shape
 				
+				# Draw the circular ball shape
 				if body.userData=='ball':
+					body.angularVelocity = body.angularVelocity*0.95
 					pygame.draw.circle(
 						screen, (255,0,0,255),
 						(int(body.position.x*PPM), 
