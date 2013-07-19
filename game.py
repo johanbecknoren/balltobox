@@ -173,8 +173,8 @@ def runIntro():
 # Handle keyboard and mouse events from pygame
 def event_handler():
 	global running,pauseSimulation,dynamicBodies,staticBodies,theMouseJoint,mouseJoint
-	theBody = dynamicBodies[0] # Placeholder
-	groundBody = staticBodies[0] # Placeholder
+#	theBody = dynamicBodies[0] # Placeholder
+#	groundBody = staticBodies[0] # Placeholder
 	
 	# Keyboard events
 	for event in pygame.event.get():
@@ -183,12 +183,15 @@ def event_handler():
 			##running=False
 			pauseSimulation = 1
 			runMenu()
-		elif event.type==KEYDOWN and event.key==K_o:
+		elif event.type==KEYDOWN and event.key==K_p:
 			# Pause/unpause simulation
 			if pauseSimulation == 1:
 				pauseSimulation = 0
 			else:
 				pauseSimulation = 1
+		elif event.type==KEYDOWN and event.key==K_r:
+			# Reset current level
+			loadLevel()
 				
 		if event.type==MOUSEBUTTONDOWN:
 			# - Kontrollera om klick på dynamic body
@@ -203,12 +206,10 @@ def event_handler():
 			for body in dynamicBodies: #Endast dynamiska bodies ska gå att greppa/flytta med musen
 				for fixture in body.fixtures:
 					if fixture.TestPoint((mouseWorldX, mouseWorldY)):
-						print 'Clicked on dynamic body: '+body.userData
 						if body.userData != 'ball':
 							mouseJoint=True
 							theBody = body
 							# Skapa b2MouseJoint här
-							print 'Creating MouseJoint'
 							theMouseJoint=world.CreateMouseJoint(
 								bodyA=groundBody,
 								bodyB=theBody,
@@ -227,7 +228,6 @@ def event_handler():
 				
 		if event.type==MOUSEBUTTONUP:
 			if mouseJoint==True:
-				print 'Destroying MouseJoint'
 				theMouseJoint.SetActive=False
 				world.DestroyJoint(theMouseJoint)
 				mouseJoint=False
@@ -238,13 +238,13 @@ def event_handler():
 def createLevelBodies():
 	global world,currentLevel,mouseJoint
 	
+	mouseJoint=False
 	for body in world.bodies: # Clear world of all bodies
 		world.DestroyBody(body)
 	for joint in world.joints:# Clear world of all joints
 		world.DestroyJoint(joint)
 	clearStaticBodyContainer()
 	clearDynamicBodyContainer()
-	mouseJoint=False
 	
 	# Static body to hold the ground shape
 	ground_body=world.CreateStaticBody(
@@ -253,13 +253,9 @@ def createLevelBodies():
 		density=0.0,
 		userData='ground'
 		)
-	print 'Defining filename'
 	fileName = 'level'+str(currentLevel)+'.txt'
-	print 'Opening and reading levvel file'
 	levelFile = open(fileName).read()
-	print 'Executing levelfile code'
 	exec levelFile
-	print 'Done'
 
 def loadLevel():
 	createLevelBodies()
@@ -271,6 +267,30 @@ def loadLevel():
 			addDynamicBodyToContainer(body)
 	screen.fill((0,0,0,0))
 	
+def drawGameOptions():
+	global screen
+	global SCREEN_WIDTH, SCREEN_HEIGHT
+	if pygame.font:
+		fontsize=18
+		font=pygame.font.Font(None, fontsize)
+		
+		text=font.render("P - Pause Game",1,(255,255,255,255))
+		textpos=(10,10)
+		screen.blit(text, textpos)
+		
+		text=font.render("R - Reset Level", 1, (255,255,255,255))
+		textpos=(10,10+fontsize)
+		screen.blit(text, textpos)
+		
+		text=font.render("Esc - Game Menu", 1, (255,255,255,255))
+		textpos=(10,10+2*fontsize)
+		screen.blit(text, textpos)
+		
+		
+		font=pygame.font.Font(None, 36)
+		text=font.render("Level "+str(currentLevel),1,(255,0,0,255))
+		textpos=(SCREEN_WIDTH-100, 10)
+		screen.blit(text, textpos)
 	
 # --- main function ---
 def main():
@@ -312,6 +332,8 @@ def main():
 		
 		# Clear the screen
 		screen.fill((0,0,0,0))
+		
+		drawGameOptions()
 					
 		for body in (world.bodies): # all bodies in world
 			# The body gives us the position and angle of its shapes
