@@ -1,4 +1,9 @@
 $cat .gitignore
 *~
+*.py~
+*.json~
+*.json
+*.txt~
+*.pyc
 
 /menu_key/**/*
