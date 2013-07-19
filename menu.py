@@ -58,6 +58,11 @@ class Menu:
         
     def get_position(self):
         return self.pozycja_zaznaczenia
+        
+    def set_lista(self, lista):
+    	self.lista = lista
+    	self.ilosc_pol = len(self.lista)
+    	self.stworz_strukture()
     
     def init(self, lista, dest_surface):
         self.lista = lista
