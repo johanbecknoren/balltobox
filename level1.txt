@@ -29,7 +29,8 @@ while i <= numGravel:
 		gravelFixture=gravelBody.CreateCircleFixture(
 			radius=0.2,
 			density=0.5,
-			friction=1.0)
+			friction=1.0,
+			restitution=0.5)
 		j=j+1
 	i=i+1
 	
@@ -56,7 +57,7 @@ static_block1=world.CreateStaticBody(
 static_goal=world.CreateStaticBody(
 	position=(25,4),
 	angle=0,
-	shapes=polygonShape(box=(0.5,1.5)),
+	shapes=polygonShape(box=(0.1,1.5)),
 	density=0.0,
 	userData='goal',
 	)

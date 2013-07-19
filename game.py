@@ -304,6 +304,7 @@ def main():
 	global introFrames
 	global pauseSimulation	# Boolean for pausing box2d simulation	
 	global menu
+	global currentLevel
 	
 	flipswitch=1	# To stop printing "Gooooll"
 	introCounter=0	# Counter for displaying intro
@@ -326,6 +327,7 @@ def main():
 		if checkContacts()=='goal':# and flipswitch==1:
 			print 'Gooooll!'
 			flipswitch=0
+			currentLevel+=1
 			loadLevel()
 		
 		# --- Draw the world ---
