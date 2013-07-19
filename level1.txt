@@ -1,0 +1,107 @@
+# Level ball dynamic body
+dynamic_ball=world.CreateDynamicBody(
+	position=(18,30),
+	angle=15,
+	angularDamping=2,
+	userData="ball",
+	shapes=circleShape(radius=1))
+
+# Add circle fixture to ball body, with non-zero density so it will move.
+dynamic_ball.CreateCircleFixture(
+	radius=1.0, 
+	friction=0.1,
+	density=3.0, 
+	restitution=0.3)
+	
+# Skapa drös med småboxar
+numGravel = 10
+i=0
+while i <= numGravel:
+	j=0
+	while j <= numGravel:
+		gravelBody=world.CreateDynamicBody(
+		position=(9+i,15+j),
+		angle=0,
+		userData='gravel'+str(i)+str(j),
+		shape=circleShape(radius=0.2)
+		)
+		
+		gravelFixture=gravelBody.CreateCircleFixture(
+			radius=0.2,
+			density=0.5,
+			friction=1.0)
+		j=j+1
+	i=i+1
+	
+# Level obstacle static body, försök ladda från fil med JSON
+
+static_block1=world.CreateStaticBody(
+	position=(8,15),
+	angle=toRad(0),
+	shapes=polygonShape(box=(0.5,4)),
+	density = 0.0,
+	userData='static_obstacle_1'
+	)
+
+# Level obstacle static body
+static_block1=world.CreateStaticBody(
+	position=(20,15),
+	angle=toRad(0),
+	shapes=polygonShape(box=(0.5,4)),
+	density = 0.0,
+	userData='static_obstacle_1'
+	)
+
+# Level goal static body
+static_goal=world.CreateStaticBody(
+	position=(25,4),
+	angle=0,
+	shapes=polygonShape(box=(0.5,1.5)),
+	density=0.0,
+	userData='goal',
+	)
+
+# Dynamic obstacle 1
+dynamic_obstacle1=world.CreateDynamicBody(
+	position=(14,10.3),
+	angle=toRad(0),
+	userData='dynamic_obstacle_1',
+	)
+box=dynamic_obstacle1.CreatePolygonFixture(
+	box=(6,0.5),
+	density=1,
+	friction=1.0)
+
+# Dynamic obstacle 2
+dynamic_obstacle2=world.CreateDynamicBody(
+	position=(15,6),
+	angle=toRad(-45),
+	userData='dynamic_obstacle_2',
+	)
+box=dynamic_obstacle2.CreatePolygonFixture(
+	box=(2,0.2),
+	density=5,
+	friction=1.0)
+
+## --- Create joints ---
+prismaticJoint = world.CreatePrismaticJoint(
+	bodyA=ground_body,
+	bodyB=dynamic_obstacle1,
+	anchor=(0,5),
+	axis=(1,0),
+	maxMotorForce=100,
+	enableMotor=True,
+	lowerTranslation=-10,
+	upperTranslation=10,
+	enableLimit=True)
+	
+prismaticJoint2 = world.CreatePrismaticJoint(
+	bodyA=ground_body,
+	bodyB=dynamic_obstacle2,
+	anchor=(0,1),
+	axis=(1,0),
+	maxMotorForce=100,
+	enableMotor=True,
+	lowerTranslation=-4,
+	upperTranslation=10,
+	enableLimit=True)
