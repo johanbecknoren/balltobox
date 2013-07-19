@@ -16,11 +16,11 @@ import os, sys
 from time import sleep
 import pygame
 from pygame.locals import *
-#import Box2D
 from Box2D.b2 import *
 from Box2D import *
-#from menu_key import *
 from menu import *	# menu_key module from pygame.org/project-menu_key-2278-.html
+import simplejson as json
+import StringIO
 
 if not pygame.font: print "Warning, fonts disabled."
 if not pygame.mixer: print "Warning, sound disabled."
@@ -61,6 +61,7 @@ colors = {
 }
 staticBodies = []	# Container for static bodies
 dynamicBodies = []	# Container for dynamic bodies
+currentLevel = 1
 
 # --- Functions ---
 # Add static body to container
@@ -68,10 +69,20 @@ def addStaticBodyToContainer(staticBody):
 	global staticBodies
 	staticBodies.append(staticBody)
 
-# Add static body to container
+# Add dynamic body to container
 def addDynamicBodyToContainer(dynamicBody):
 	global dynamicBodies
 	dynamicBodies.append(dynamicBody)
+	
+# Clear static body container
+def clearStaticBodyContainer():
+	global staticBodies
+	staticBodies = []
+
+# Clear dynamic body container
+def clearDynamicBodyContainer():
+	global dynamicBodies
+	dynamicBodies = []
 	
 # Convert degree to radian
 def toRad(degree):
@@ -215,9 +226,15 @@ def event_handler():
 
 # Create Box2D bodies
 def createLevelBodies():
-	# Add file input for body creation here
+	global world,currentLevel,mouseJoint
 	
-	global world
+	for body in world.bodies: # Clear world of all bodies
+		world.DestroyBody(body)
+	for joint in world.joints:# Clear world of all joints
+		world.DestroyJoint(joint)
+	clearStaticBodyContainer()
+	clearDynamicBodyContainer()
+	mouseJoint=False
 	
 	# Static body to hold the ground shape
 	ground_body=world.CreateStaticBody(
@@ -226,9 +243,16 @@ def createLevelBodies():
 		density=0.0,
 		userData='ground'
 		)
-		
+	print 'Defining filename'
+	fileName = 'level'+str(currentLevel)+'.txt'
+	print 'Opening and reading levvel file'
+	levelFile = open(fileName).read()
+	print 'Executing levelfile code'
+	exec levelFile
+	print 'Done'
+	"""
 	# Level ball dynamic body
-	dynamic_body=world.CreateDynamicBody(
+	dynamic_ball=world.CreateDynamicBody(
 		position=(12,30),
 		angle=15,
 		angularDamping=2,
@@ -236,7 +260,7 @@ def createLevelBodies():
 		shapes=circleShape(radius=1))
 
 	# Add circle fixture to ball body, with non-zero density so it will move.
-	circle=dynamic_body.CreateCircleFixture(
+	dynamic_ball.CreateCircleFixture(
 		radius=1.0, 
 		friction=0.1,
 		density=3.0, 
@@ -262,8 +286,8 @@ def createLevelBodies():
 			j=j+1
 		i=i+1
 		
+	# Level obstacle static body, försök ladda från fil med JSON
 	
-	# Level obstacle static body
 	static_block1=world.CreateStaticBody(
 		position=(8,15),
 		angle=toRad(0),
@@ -271,6 +295,7 @@ def createLevelBodies():
 		density = 0.0,
 		userData='static_obstacle_1'
 		)
+	
 	# Level obstacle static body
 	static_block1=world.CreateStaticBody(
 		position=(20,15),
@@ -333,8 +358,19 @@ def createLevelBodies():
 		lowerTranslation=-4,
 		upperTranslation=10,
 		enableLimit=True)
-		
+	"""
 
+def loadLevel():
+	createLevelBodies()
+	# Store bodies in separate containers for static/dynamic
+	for body in world.bodies:
+		if body.type==staticBody:
+			addStaticBodyToContainer(body)
+		elif body.type==dynamicBody:
+			addDynamicBodyToContainer(body)
+	screen.fill((0,0,0,0))
+	
+	
 # --- main function ---
 def main():
 	global world # Box2D world object
@@ -351,7 +387,7 @@ def main():
 	flipswitch=1	# To stop printing "Gooooll"
 	introCounter=0	# Counter for displaying intro
 
-	
+	"""
 	createLevelBodies()
 	
 	# Store bodies in separate containers for static/dynamic
@@ -361,6 +397,8 @@ def main():
 		elif body.type==dynamicBody:
 			addDynamicBodyToContainer(body)
 	screen.fill((0,0,0,0))
+	"""
+	loadLevel()
 	
 	# Show game menu
 	initMenu()
@@ -375,9 +413,10 @@ def main():
 		event_handler()
 
 		# Check ball-goal collision/contact (level completed)
-		if checkContacts()=='goal' and flipswitch==1:
+		if checkContacts()=='goal':# and flipswitch==1:
 			print 'Gooooll!'
 			flipswitch=0
+			loadLevel()
 		
 		# --- Draw the world ---
 		
