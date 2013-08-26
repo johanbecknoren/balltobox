@@ -60,12 +60,14 @@ displayInstructions=False # Boolean for showing game options
 displayOutro=False # Boolean for showing outro when closing game
 theMouseJoint = ""	# Mousejoint for grabbing dynamic objects (as b2MouseJoint later)
 mouseJoint = False  # bool that tells if a mouse joint is active
+totalPoints=0
 colors = {
     staticBody  : (190,190,190,255),
     dynamicBody : (0,200,200,255),
 }
 staticBodies = []	# Container for static bodies
 dynamicBodies = []	# Container for dynamic bodies
+bodiesToKill = [] # Container for bodies to be destroyed efter each timestep
 currentLevel = 1
 
 # --- Functions ---
@@ -89,13 +91,26 @@ def clearDynamicBodyContainer():
 	global dynamicBodies
 	dynamicBodies = []
 	
+# Bodies to be killed between each time step
+def killBodies():
+	global bodiesToKill,mouseJoint
+	prevMouseJoint=mouseJoint
+	mouseJoint=False
+	for b in bodiesToKill:
+		world.DestroyBody(b)
+		
+	bodiesToKill = []
+	mouseJoint=prevMouseJoint
+	
+		
+		
 # Convert degree to radian
 def toRad(degree):
 	return degree*(3.1415/180.0)
 
 # Check for collisions between specific objects
 def checkContacts():
-	global world
+	global world, totalPoints
 	
 	# Check of ball in goal
 	for contact in world.contacts:
@@ -104,7 +119,19 @@ def checkContacts():
 		# Check if ball reached goal.
 		if fixA.body.userData=='ball' or fixB.body.userData=='ball':
 			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
+				totalPoints = totalPoints+20
 				return 'goal'
+		# Add points for gravel objects reaching goal
+		if fixA.body.userData=='goal' or fixB.body.userData=='goal':
+			if fixA.body.userData[:6]=='gravel' or fixB.body.userData[:6]=='gravel':
+				if fixA.body.userData[:6]=='gravel':
+					print 'Destroying fixA.body'
+				elif fixB.body.userData[:6]=='gravel':
+					for b in world.bodies:
+						if b.userData == fixB.body.userData:
+							bodiesToKill.append(b)
+					
+				totalPoints = totalPoints+1
 		# Conveyor belt effect
 		if fixA.body.userData[:20]=='static_conveyor_belt':# or fixA.body.userData=="ball":
 			contact.tangentSpeed = 5.0
@@ -123,9 +150,9 @@ def checkContacts():
 			#print "fixB.body.position = "+str(teleportee.position)
 			
 			deltaX = body_in.position.x - teleportee.position.x
-			newXpos = body_out.position.x - deltaX
+			newXpos = body_out.position.x# - deltaX
 			#print "deltaX = " +str(deltaX)
-			teleportee.position = (newXpos,18)
+			teleportee.position = (newXpos,19)
 			if teleportee.linearVelocity.length >10:
 				teleportee.linearVelocity.Normalize()
 				teleportee.linearVelocity = teleportee.linearVelocity * 10
@@ -232,8 +259,12 @@ def runInstructions():
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=150)
 		screen.blit(text,textpos)
 		
-		text=font.render("the game to get the red ball to the green block",1,(255,255,255,255))
+		text=font.render("the game to get the red ball to the green block.",1,(255,255,255,255))
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=150+normal_font_size)
+		screen.blit(text,textpos)
+		
+		text=font.render("Rack up extra score by getting white balls into goal aswell.",1,(255,255,255,255))
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=180)
 		screen.blit(text,textpos)
 		
 		
@@ -391,6 +422,11 @@ def drawGameOptions():
 		text=font.render("Level "+str(currentLevel),1,(255,0,0,255))
 		textpos=(SCREEN_WIDTH-100, 10)
 		screen.blit(text, textpos)
+		
+		font=pygame.font.Font(None, 36)
+		text=font.render('Score: '+str(totalPoints),1,(255,255,255,255))
+		textpos=(SCREEN_WIDTH-150,46)
+		screen.blit(text,textpos)
 	
 # --- main function ---
 def main():
@@ -422,6 +458,8 @@ def main():
 
 	# Main game loop
 	while running:
+		
+		
 		#Check the event queue
 		event_handler()
 
@@ -437,7 +475,8 @@ def main():
 		# Clear the screen
 		screen.fill((0,0,0,0))
 		
-		drawGameOptions() # Draw keyboard bindings etc.
+		drawGameOptions() # Draw keyboard bindings, level, score etc.
+		
 					
 		for body in (world.bodies): # all bodies in world
 			# The body gives us the position and angle of its shapes
@@ -485,6 +524,8 @@ def main():
 					    	
 		if pauseSimulation==0:
 			world.Step(TIME_STEP, 10, 10)
+		# Kill off bodies since last time step
+		killBodies()
 			
 		clock.tick(TARGET_FPS)
 		pygame.display.flip()

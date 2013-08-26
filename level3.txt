@@ -29,7 +29,7 @@ dynamic_teleport_out_1=world.CreateDynamicBody(
 	userData='dynamic_teleport_out_1',
 	)
 box=dynamic_teleport_out_1.CreatePolygonFixture(
-	box=(5,0.5),
+	box=(2,0.2),
 	density=0.1,
 	friction=1.0)
 	
@@ -40,7 +40,7 @@ dynamic_teleport_in_1=world.CreateDynamicBody(
 	userData='dynamic_teleport_in_1',
 	)
 box=dynamic_teleport_in_1.CreatePolygonFixture(
-	box=(5,0.5),
+	box=(2,0.2),
 	density=0.1,
 	friction=1.0)
 	
@@ -51,8 +51,8 @@ prismaticJoint = world.CreatePrismaticJoint(
 	axis=(1,0),
 	maxMotorForce=100,
 	enableMotor=False,
-	lowerTranslation=-10,
-	upperTranslation=10,
+	lowerTranslation=-5,
+	upperTranslation=17,
 	enableLimit=True)
 	
 prismaticJoint = world.CreatePrismaticJoint(
@@ -62,8 +62,8 @@ prismaticJoint = world.CreatePrismaticJoint(
 	axis=(1,0),
 	maxMotorForce=100,
 	enableMotor=False,
-	lowerTranslation=-10,
-	upperTranslation=10,
+	lowerTranslation=-5,
+	upperTranslation=17,
 	enableLimit=True)
 	
 numGravel = 10
