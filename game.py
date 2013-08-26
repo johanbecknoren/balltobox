@@ -108,59 +108,6 @@ def killBodies():
 def toRad(degree):
 	return degree*(3.1415/180.0)
 
-# Check for collisions between specific objects
-def checkContacts():
-	global world, totalPoints
-	
-	# Check of collisions (contacts)
-	for contact in world.contacts:
-		fixA = contact.fixtureA
-		fixB = contact.fixtureB
-		# Check if ball reached goal.
-		if fixA.body.userData=='ball' or fixB.body.userData=='ball':
-			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
-				totalPoints = totalPoints+20
-				return 'goal'
-		# Add points for gravel objects reaching goal, tag gravel for destruction
-		if fixA.body.userData=='goal' or fixB.body.userData=='goal':
-			if fixA.body.userData[:6]=='gravel' or fixB.body.userData[:6]=='gravel':
-				totalPoints = totalPoints+1
-				if fixA.body.userData[:6]=='gravel':
-					for b in bodies:
-						if b.userData == fixA.body.userData:
-							bodiesToKill.append(b)
-					print 'Destroying fixA.body'
-				elif fixB.body.userData[:6]=='gravel':
-					for b in world.bodies:
-						if b.userData == fixB.body.userData:
-							bodiesToKill.append(b)
-		# Conveyor belt effect
-		if fixA.body.userData[:20]=='static_conveyor_belt':# or fixA.body.userData=="ball":
-			contact.tangentSpeed = 5.0
-		elif fixB.body.userData[:20]=='static_conveyor_belt':# or fixB.body.userData=="ball":
-			contact.tangentSpeed = -5.0
-		# Teleport effect
-		if fixA.body.userData[:19]=='dynamic_teleport_in':
-			body_in = fixA.body
-			teleportee = fixB.body
-			for b in world.bodies:
-				if b.userData[:20]=='dynamic_teleport_out':
-					body_out = b
-					
-#			print "fixA AABB=: " + str(fixA.GetAABB(0))
-			
-			#print "fixB.body.position = "+str(teleportee.position)
-			
-			deltaX = body_in.position.x - teleportee.position.x
-			newXpos = body_out.position.x# - deltaX
-			#print "deltaX = " +str(deltaX)
-			teleportee.position = (newXpos,19)
-			if teleportee.linearVelocity.length >10:
-				teleportee.linearVelocity.Normalize()
-				teleportee.linearVelocity = teleportee.linearVelocity * 10
-			
-	return
-
 # Initialize Menu
 def initMenu():
 	global menu,screen
@@ -304,7 +251,54 @@ def runOutro():
 		#pygame.display.quit()
 		#sys.exit() 
 	
-
+# Check for collisions between specific objects
+def checkContacts():
+	global world, totalPoints
+	
+	# Check of collisions (contacts)
+	for contact in world.contacts:
+		fixA = contact.fixtureA
+		fixB = contact.fixtureB
+		# Check if ball reached goal.
+		if fixA.body.userData=='ball' or fixB.body.userData=='ball':
+			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
+				totalPoints = totalPoints+20
+				return 'goal'
+		# Add points for gravel objects reaching goal, tag gravel for destruction
+		if fixA.body.userData=='goal' or fixB.body.userData=='goal':
+			if fixA.body.userData[:6]=='gravel' or fixB.body.userData[:6]=='gravel':
+				totalPoints = totalPoints+1
+				if fixA.body.userData[:6]=='gravel':
+					for b in bodies:
+						if b.userData == fixA.body.userData:
+							bodiesToKill.append(b)
+					print 'Destroying fixA.body'
+				elif fixB.body.userData[:6]=='gravel':
+					for b in world.bodies:
+						if b.userData == fixB.body.userData:
+							bodiesToKill.append(b)
+		# Conveyor belt effect
+		if fixA.body.userData[:20]=='static_conveyor_belt':# or fixA.body.userData=="ball":
+			contact.tangentSpeed = 5.0
+		elif fixB.body.userData[:20]=='static_conveyor_belt':# or fixB.body.userData=="ball":
+			contact.tangentSpeed = -5.0
+		# Teleport effect
+		if fixA.body.userData[:19]=='dynamic_teleport_in':
+			body_in = fixA.body
+			teleportee = fixB.body
+			for b in world.bodies:
+				if b.userData[:20]=='dynamic_teleport_out':
+					body_out = b
+			
+			deltaX = body_in.position.x - teleportee.position.x
+			newXpos = body_out.position.x# - deltaX
+			teleportee.position = (newXpos,19)
+			if teleportee.linearVelocity.length >10:
+				teleportee.linearVelocity.Normalize()
+				teleportee.linearVelocity = teleportee.linearVelocity * 10
+			
+	return
+	
 # Handle keyboard and mouse events from pygame
 def event_handler():
 	global running,pauseSimulation,dynamicBodies,staticBodies,theMouseJoint,mouseJoint
@@ -340,7 +334,7 @@ def event_handler():
 			for body in dynamicBodies: #Endast dynamiska bodies ska gå att greppa/flytta med musen
 				for fixture in body.fixtures:
 					if fixture.TestPoint((mouseWorldX, mouseWorldY)):
-						if body.userData != 'ball':
+						if body.userData != 'ball' and body.userData[:6]!='gravel':
 							mouseJoint=True
 							theBody = body
 							# Skapa b2MouseJoint här
@@ -368,7 +362,7 @@ def event_handler():
 # Create Box2D bodies
 def createLevelBodies():
 	global world,currentLevel,mouseJoint
-	currentLevel=3
+#	currentLevel=3
 	if currentLevel >=4 :
 		runOutro()
 	mouseJoint=False
