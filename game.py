@@ -106,11 +106,29 @@ def checkContacts():
 			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
 				return 'goal'
 		# Conveyor belt effect
-		# body.userData[:20]=='static_conveyor_belt':
 		if fixA.body.userData[:20]=='static_conveyor_belt':# or fixA.body.userData=="ball":
 			contact.tangentSpeed = 5.0
 		elif fixB.body.userData[:20]=='static_conveyor_belt':# or fixB.body.userData=="ball":
 			contact.tangentSpeed = -5.0
+		# Teleport effect
+		if fixA.body.userData[:19]=='dynamic_teleport_in':
+			body_in = fixA.body
+			teleportee = fixB.body
+			for b in world.bodies:
+				if b.userData[:20]=='dynamic_teleport_out':
+					body_out = b
+					
+#			print "fixA AABB=: " + str(fixA.GetAABB(0))
+			
+			#print "fixB.body.position = "+str(teleportee.position)
+			
+			deltaX = body_in.position.x - teleportee.position.x
+			newXpos = body_out.position.x - deltaX
+			#print "deltaX = " +str(deltaX)
+			teleportee.position = (newXpos,18)
+			if teleportee.linearVelocity.length >10:
+				teleportee.linearVelocity.Normalize()
+				teleportee.linearVelocity = teleportee.linearVelocity * 10
 			
 	return
 
@@ -229,7 +247,7 @@ def runInstructions():
 		screen.blit(instruction_image, (SCREEN_WIDTH/2-103,250))
 		
 def runOutro():
-	global screen,displayOutro
+	global screen,currentLevel
 	
 	if pygame.font:
 		screen.fill((51,51,51,0))
@@ -247,9 +265,11 @@ def runOutro():
 		while outroCounter<=180:
 			pygame.display.flip()
 			outroCounter=outroCounter+1
-			
-		pygame.display.quit()
-		sys.exit() 
+		
+		currentLevel=1
+		runMenu()	
+		#pygame.display.quit()
+		#sys.exit() 
 	
 
 # Handle keyboard and mouse events from pygame
@@ -304,21 +324,19 @@ def event_handler():
 			if mouseJoint==True:
 				mouseWorldX = pygame.mouse.get_pos()[0]/PPM
 				mouseWorldY = (SCREEN_HEIGHT-pygame.mouse.get_pos()[1])/PPM
-				theMouseJoint.target=(mouseWorldX, mouseWorldY)
-				#Gör saker med b2MouseJoint här
-				
+				theMouseJoint.target=(mouseWorldX, mouseWorldY)				
 		if event.type==MOUSEBUTTONUP:
 			if mouseJoint==True:
 				theMouseJoint.SetActive=False
 				world.DestroyJoint(theMouseJoint)
 				mouseJoint=False
-			# Förstör b2MouseJoint här
 			
 
 # Create Box2D bodies
 def createLevelBodies():
 	global world,currentLevel,mouseJoint
-	if currentLevel >=3 :
+	currentLevel=3
+	if currentLevel >=4 :
 		runOutro()
 	mouseJoint=False
 	for body in world.bodies: # Clear world of all bodies

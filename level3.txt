@@ -1,0 +1,88 @@
+# Level ball dynamic body
+dynamic_ball=world.CreateDynamicBody(
+	position=(14,15),
+	angle=0,
+	angularDamping=2,
+	userData="ball",
+	shapes=circleShape(radius=1))
+
+# Add circle fixture to ball body, with non-zero density so it will move.
+dynamic_ball.CreateCircleFixture(
+	radius=1.0, 
+	friction=0.1,
+	density=1.0, 
+	restitution=0.3)
+	
+# Level goal static body
+static_goal=world.CreateStaticBody(
+	position=(25,10),
+	angle=toRad(90),
+	shapes=polygonShape(box=(0.2,2)),
+	density=0.0,
+	userData='goal',
+	)
+	
+# Dynamic teleport obstacle 1
+dynamic_teleport_out_1=world.CreateDynamicBody(
+	position=(14,20.3),
+	angle=toRad(0),
+	userData='dynamic_teleport_out_1',
+	)
+box=dynamic_teleport_out_1.CreatePolygonFixture(
+	box=(6,0.5),
+	density=0.1,
+	friction=1.0)
+	
+# Dynamic teleport obstacle 2
+dynamic_teleport_in_1=world.CreateDynamicBody(
+	position=(14,5),
+	angle=toRad(0),
+	userData='dynamic_teleport_in_1',
+	)
+box=dynamic_teleport_in_1.CreatePolygonFixture(
+	box=(6,0.5),
+	density=0.1,
+	friction=1.0)
+	
+prismaticJoint = world.CreatePrismaticJoint(
+	bodyA=ground_body,
+	bodyB=dynamic_teleport_out_1,
+	anchor=(0,1),
+	axis=(1,0),
+	maxMotorForce=100,
+	enableMotor=False,
+	lowerTranslation=-10,
+	upperTranslation=10,
+	enableLimit=True)
+	
+prismaticJoint = world.CreatePrismaticJoint(
+	bodyA=ground_body,
+	bodyB=dynamic_teleport_in_1,
+	anchor=(0,1),
+	axis=(1,0),
+	maxMotorForce=100,
+	enableMotor=False,
+	lowerTranslation=-10,
+	upperTranslation=10,
+	enableLimit=True)
+	
+numGravel = 10
+i=0
+while i <= numGravel:
+	j = 0
+	while j<3:
+		gravelBody=world.CreateDynamicBody(
+		position=(11+i*0.5+j*0.5,18+j*0.8),
+		angle=0,
+		userData='gravel'+str(i),
+		linearVelocity=(0,-5),
+		shape=circleShape(radius=0.2)
+		)
+	
+		gravelFixture=gravelBody.CreateCircleFixture(
+			radius=0.2,
+			density=0.5,
+			friction=1.0,
+			restitution=0.5)
+		j=j+1
+	i=i+1
