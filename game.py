@@ -6,10 +6,10 @@
  Johan Beck-Norén, jobe4452
  Ubuntu 12.10
  Python 2.7
-External modules used:
+External modules used not written by me:
  	pygame
  	pyBox2D
- 	menu_key
+ 	menu_key (slightly modified by me)
 """
 
 import os, sys
@@ -21,6 +21,8 @@ from Box2D import *
 from menu import *	# menu_key module from pygame.org/project-menu_key-2278-.html
 import simplejson as json
 import StringIO
+
+#from helper_functions import *
 
 if not pygame.font: print "Warning, fonts disabled."
 if not pygame.mixer: print "Warning, sound disabled."
@@ -35,6 +37,7 @@ SCREEN_WIDTH, SCREEN_HEIGHT=640,480
 vel_iters, pos_iters = 10, 10
 
 # --- pygame setup ---
+pygame.init()
 pygame.init()
 screen=pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), 0, 32)
 pygame.display.set_caption('Ball-in-box')
@@ -54,11 +57,12 @@ pauseSimulation = 0 # Boolean to pause Box2d physics simulation
 running=True	# Main game loop
 displayMenu=True	# Boolean for showing menu
 displayInstructions=False # Boolean for showing game options
+displayOutro=False # Boolean for showing outro when closing game
 theMouseJoint = ""	# Mousejoint for grabbing dynamic objects (as b2MouseJoint later)
 mouseJoint = False  # bool that tells if a mouse joint is active
 colors = {
-    staticBody  : (255,255,255,255),
-    dynamicBody : (127,127,127,255),
+    staticBody  : (190,190,190,255),
+    dynamicBody : (0,200,200,255),
 }
 staticBodies = []	# Container for static bodies
 dynamicBodies = []	# Container for dynamic bodies
@@ -128,6 +132,11 @@ def runMenu():
 	screen.fill((51,51,51,0))
 	menu.draw()
 	
+	font=pygame.font.Font(None, 48)
+	text=font.render("Ball-to-box",1,(255,255,255,255))
+	textpos=(SCREEN_WIDTH/2-text.get_rect().centerx, 100)
+	screen.blit(text,textpos)
+	
 	pygame.key.set_repeat(199,69)#(delay,interval)
 	pygame.display.update()
 	while 1:
@@ -171,13 +180,19 @@ def runMenu():
 def runIntro():
 	global SCREEN_WIDTH, SCREEN_HEIGHT
 	if pygame.font:
+		screen.fill((51,51,51,0))
 		font=pygame.font.Font(None, 48)
-		text=font.render("Ball-in-box",1,(255,255,255,255))
+		text=font.render("Ball-to-box",1,(255,255,255,255))
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2)
+		screen.blit(text, textpos)
+		
+		font=pygame.font.Font(None,30)
+		text=font.render("A puzzle game",1,(255,255,255,255))
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2+50)
+		screen.blit(text, textpos)
 		
 		introFrameCounter=0
-		screen.blit(text, textpos)
-		while introFrameCounter<=60:
+		while introFrameCounter<=120:
 			pygame.display.flip()
 			introFrameCounter=introFrameCounter+1
 	print 'Intro'
@@ -212,6 +227,30 @@ def runInstructions():
 	if pygame.image:
 		instruction_image=pygame.image.load("ballinbox_instr.png").convert_alpha()
 		screen.blit(instruction_image, (SCREEN_WIDTH/2-103,250))
+		
+def runOutro():
+	global screen,displayOutro
+	
+	if pygame.font:
+		screen.fill((51,51,51,0))
+		font=pygame.font.Font(None, 48)
+		text=font.render("Thank you for playing!",1,(255,255,255,255))
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2)
+		screen.blit(text,textpos)
+		
+		font=pygame.font.Font(None,36)
+		text=font.render("Game by Johan Beck-Noren, 2013",1,(255,255,255,255))
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2+50)
+		screen.blit(text,textpos)
+		
+		outroCounter=0
+		while outroCounter<=180:
+			pygame.display.flip()
+			outroCounter=outroCounter+1
+			
+		pygame.display.quit()
+		sys.exit() 
+	
 
 # Handle keyboard and mouse events from pygame
 def event_handler():
@@ -279,7 +318,8 @@ def event_handler():
 # Create Box2D bodies
 def createLevelBodies():
 	global world,currentLevel,mouseJoint
-#	currentLevel=2
+	if currentLevel >=3 :
+		runOutro()
 	mouseJoint=False
 	for body in world.bodies: # Clear world of all bodies
 		world.DestroyBody(body)
@@ -420,8 +460,11 @@ def main():
 				    
 				    if body.userData=='goal':
 				    	pygame.draw.polygon(screen, (0,255,0,255), vertices, 0)
-				    else:
-				    	pygame.draw.polygon(screen, colors[body.type], vertices, 1)
+				    elif body.type==dynamicBody:
+					   	pygame.draw.polygon(screen, colors[body.type], vertices, 1)
+				    elif body.type==staticBody:
+					   	pygame.draw.polygon(screen, colors[body.type], vertices, 0)
+					    	
 		if pauseSimulation==0:
 			world.Step(TIME_STEP, 10, 10)
 			
