@@ -112,7 +112,7 @@ def toRad(degree):
 def checkContacts():
 	global world, totalPoints
 	
-	# Check of ball in goal
+	# Check of collisions (contacts)
 	for contact in world.contacts:
 		fixA = contact.fixtureA
 		fixB = contact.fixtureB
@@ -121,17 +121,19 @@ def checkContacts():
 			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
 				totalPoints = totalPoints+20
 				return 'goal'
-		# Add points for gravel objects reaching goal
+		# Add points for gravel objects reaching goal, tag gravel for destruction
 		if fixA.body.userData=='goal' or fixB.body.userData=='goal':
 			if fixA.body.userData[:6]=='gravel' or fixB.body.userData[:6]=='gravel':
+				totalPoints = totalPoints+1
 				if fixA.body.userData[:6]=='gravel':
+					for b in bodies:
+						if b.userData == fixA.body.userData:
+							bodiesToKill.append(b)
 					print 'Destroying fixA.body'
 				elif fixB.body.userData[:6]=='gravel':
 					for b in world.bodies:
 						if b.userData == fixB.body.userData:
 							bodiesToKill.append(b)
-					
-				totalPoints = totalPoints+1
 		# Conveyor belt effect
 		if fixA.body.userData[:20]=='static_conveyor_belt':# or fixA.body.userData=="ball":
 			contact.tangentSpeed = 5.0
@@ -390,6 +392,7 @@ def createLevelBodies():
 	exec levelFile
 
 def loadLevel():
+	global currentLevel
 	createLevelBodies()
 	# Store bodies in separate containers for static/dynamic
 	for body in world.bodies:
@@ -397,7 +400,18 @@ def loadLevel():
 			addStaticBodyToContainer(body)
 		elif body.type==dynamicBody:
 			addDynamicBodyToContainer(body)
-	screen.fill((0,0,0,0))
+	screen.fill((51,51,51,255))
+	if pygame.font:
+		font=pygame.font.Font(None,36)
+		text=font.render("Level "+str(currentLevel),1,(255,255,255,255))
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2)
+		screen.blit(text,textpos)
+		
+		levelIntroCounter=0
+		while levelIntroCounter<=120:
+			pygame.display.flip()
+			levelIntroCounter=levelIntroCounter+1
+	
 	
 def drawGameOptions():
 	global screen
@@ -442,10 +456,6 @@ def main():
 	global menu
 	global currentLevel
 	
-	introCounter=0	# Counter for displaying intro title after starting game from menu
-	print "Loading level.."
-	loadLevel()
-	
 	# Show game menu
 	print "Init Menu"
 	initMenu()
@@ -455,6 +465,9 @@ def main():
 	# Show game intro
 	print "Running game intro"
 	runIntro()
+	
+	print "Loading level.."
+	loadLevel()
 
 	# Main game loop
 	while running:
