@@ -213,7 +213,7 @@ def runInstructions():
 		screen.blit(text,textpos)
 		
 		text=font.render("Rack up extra score by getting white balls into goal aswell.",1,(255,255,255,255))
-		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=180)
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=200)
 		screen.blit(text,textpos)
 		
 		
@@ -231,6 +231,12 @@ def runOutro():
 	
 	if pygame.font:
 		screen.fill((51,51,51,0))
+		
+		font=pygame.font.Font(None, 48)
+		text=font.render("FINAL SCORE: "+str(totalPoints),1,(255,0,0,255))
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2-50)
+		screen.blit(text,textpos)
+		
 		font=pygame.font.Font(None, 48)
 		text=font.render("Thank you for playing!",1,(255,255,255,255))
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2)
