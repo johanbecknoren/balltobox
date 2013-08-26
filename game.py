@@ -242,13 +242,13 @@ def runOutro():
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2)
 		screen.blit(text,textpos)
 		
-		font=pygame.font.Font(None,36)
+		font=pygame.font.Font(None,24)
 		text=font.render("Game by Johan Beck-Noren, 2013",1,(255,255,255,255))
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2+50)
 		screen.blit(text,textpos)
 		
 		outroCounter=0
-		while outroCounter<=180:
+		while outroCounter<=240:
 			pygame.display.flip()
 			outroCounter=outroCounter+1
 		
