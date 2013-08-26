@@ -53,6 +53,7 @@ introFrames = 2*TARGET_FPS # Show intro for 2 seconds
 pauseSimulation = 0 # Boolean to pause Box2d physics simulation
 running=True	# Main game loop
 displayMenu=True	# Boolean for showing menu
+displayInstructions=False # Boolean for showing game options
 theMouseJoint = ""	# Mousejoint for grabbing dynamic objects (as b2MouseJoint later)
 mouseJoint = False  # bool that tells if a mouse joint is active
 colors = {
@@ -101,10 +102,12 @@ def checkContacts():
 			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
 				return 'goal'
 		# Conveyor belt effect
-		elif fixA.body.userData=='static_obstacle_1':
+		# body.userData[:20]=='static_conveyor_belt':
+		if fixA.body.userData[:20]=='static_conveyor_belt':# or fixA.body.userData=="ball":
 			contact.tangentSpeed = 5.0
-		elif fixB.body.userData=='static_obstacle_1':
-			contact.tangentSpeed = -5.0			
+		if fixB.body.userData[:20]=='static_conveyor_belt':# or fixB.body.userData=="ball":
+			contact.tangentSpeed = -5.0
+			
 	return
 
 # Initialize Menu
@@ -114,7 +117,7 @@ def initMenu():
 	
 # Display Menu
 def runMenu():
-	global menu,screen,displayMenu,pauseSimulation
+	global menu,screen,displayMenu,pauseSimulation,displayInstructions
 	
 	if pauseSimulation == 1:
 		menu.set_lista(['Resume Game','Information','Quit'])
@@ -129,7 +132,7 @@ def runMenu():
 	pygame.display.update()
 	while 1:
 		for event in pygame.event.get():
-			if event.type == KEYDOWN:
+			if event.type == KEYDOWN:			
 				if event.key == K_UP:
 					menu.draw(-1) #here is the Menu class function
 				if event.key == K_DOWN:
@@ -139,16 +142,25 @@ def runMenu():
 						print 'Start the game!'
 						pauseSimulation = 0
 						displayMenu=False # Deactivate menu
+						displayInstructions=False 
+						running=True
 						screen.fill((0,0,0,0)) # Blank screen
 						return	# Exit menu function
 					elif menu.get_position() == 1:
 						print 'Show game instructions!'
+						runInstructions()
 					elif menu.get_position() == 2:#here is the Menu class function
 						pygame.display.quit()
 						sys.exit()                        
 				if event.key == K_ESCAPE:
-					pygame.display.quit()
-					sys.exit()
+					print "ESC, caught in menu event"
+					if displayInstructions == False:
+						pygame.display.quit()
+						sys.exit()
+					elif displayInstructions == True:
+						displayInstructions = False
+						runMenu()
+						return
 				pygame.display.update()
 			elif event.type == QUIT:
 				pygame.display.quit()
@@ -170,15 +182,45 @@ def runIntro():
 			introFrameCounter=introFrameCounter+1
 	print 'Intro'
 
+def runInstructions():
+	global screen,displayInstructions
+	displayInstructions=True
+	if pygame.font:
+		heading_font_size=48
+		normal_font_size=18
+		screen.fill((51,51,51,0))
+		font=pygame.font.Font(None, heading_font_size)
+		text=font.render("Ball-in-box",1,(255,255,255,255))
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=100)
+		screen.blit(text, textpos)
+		
+		font=pygame.font.Font(None, normal_font_size)
+		text=font.render("Use the mouse to affect the different blocks in",1,(255,255,255,255))
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=150)
+		screen.blit(text,textpos)
+		
+		text=font.render("the game to get the red ball to the green block",1,(255,255,255,255))
+		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=150+normal_font_size)
+		screen.blit(text,textpos)
+		
+		
+		font=pygame.font.Font(None,18)
+		text=font.render("ESC - Back to menu",1,(255,255,255,255))
+		textpos=(10,10)
+		screen.blit(text,textpos)
+		
+	if pygame.image:
+		instruction_image=pygame.image.load("ballinbox_instr.png").convert_alpha()
+		screen.blit(instruction_image, (SCREEN_WIDTH/2-103,250))
+
 # Handle keyboard and mouse events from pygame
 def event_handler():
 	global running,pauseSimulation,dynamicBodies,staticBodies,theMouseJoint,mouseJoint
-#	theBody = dynamicBodies[0] # Placeholder
-#	groundBody = staticBodies[0] # Placeholder
 	
 	# Keyboard events
 	for event in pygame.event.get():
 		if event.type==QUIT or (event.type==KEYUP and event.key==K_ESCAPE):
+			print "ESC, caught in main event handler"
 			# User closed the window or pressed escape
 			##running=False
 			pauseSimulation = 1
@@ -237,7 +279,7 @@ def event_handler():
 # Create Box2D bodies
 def createLevelBodies():
 	global world,currentLevel,mouseJoint
-	
+	currentLevel=2
 	mouseJoint=False
 	for body in world.bodies: # Clear world of all bodies
 		world.DestroyBody(body)
@@ -286,7 +328,6 @@ def drawGameOptions():
 		textpos=(10,10+2*fontsize)
 		screen.blit(text, textpos)
 		
-		
 		font=pygame.font.Font(None, 36)
 		text=font.render("Level "+str(currentLevel),1,(255,0,0,255))
 		textpos=(SCREEN_WIDTH-100, 10)
@@ -306,16 +347,18 @@ def main():
 	global menu
 	global currentLevel
 	
-	flipswitch=1	# To stop printing "Gooooll"
-	introCounter=0	# Counter for displaying intro
-
+	introCounter=0	# Counter for displaying intro title after starting game from menu
+	print "Loading level.."
 	loadLevel()
 	
 	# Show game menu
+	print "Init Menu"
 	initMenu()
+	print "Starting menu"
 	runMenu()
 	
 	# Show game intro
+	print "Running game intro"
 	runIntro()
 
 	# Main game loop
@@ -324,7 +367,7 @@ def main():
 		event_handler()
 
 		# Check ball-goal collision/contact (level completed)
-		if checkContacts()=='goal':# and flipswitch==1:
+		if checkContacts()=='goal':
 			print 'Gooooll!'
 			flipswitch=0
 			currentLevel+=1
@@ -335,7 +378,7 @@ def main():
 		# Clear the screen
 		screen.fill((0,0,0,0))
 		
-		drawGameOptions()
+		drawGameOptions() # Draw keyboard bindings etc.
 					
 		for body in (world.bodies): # all bodies in world
 			# The body gives us the position and angle of its shapes

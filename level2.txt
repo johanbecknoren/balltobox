@@ -1,7 +1,7 @@
 # Level ball dynamic body
 dynamic_ball=world.CreateDynamicBody(
-	position=(18,30),
-	angle=15,
+	position=(3,30),
+	angle=0,
 	angularDamping=2,
 	userData="ball",
 	shapes=circleShape(radius=1))
@@ -13,12 +13,20 @@ dynamic_ball.CreateCircleFixture(
 	density=3.0, 
 	restitution=0.3)
 	
+static_conveyor_belt_1=world.CreateStaticBody(
+	position=(9,14),
+	angle=toRad(0),
+	shapes=polygonShape(box=(10,0.5)),
+	density=0.0,
+	userData='static_conveyor_belt_1')
+	
 	# Skapa drös med småboxar
-numGravel = 10
+numGravel = 20
 i=0
 while i <= numGravel:
+	
 	gravelBody=world.CreateDynamicBody(
-	position=(9+i,10),
+	position=(5+i*0.5,15),
 	angle=0,
 	userData='gravel'+str(i),
 	shape=circleShape(radius=0.2)
