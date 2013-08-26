@@ -105,7 +105,7 @@ def checkContacts():
 		# body.userData[:20]=='static_conveyor_belt':
 		if fixA.body.userData[:20]=='static_conveyor_belt':# or fixA.body.userData=="ball":
 			contact.tangentSpeed = 5.0
-		if fixB.body.userData[:20]=='static_conveyor_belt':# or fixB.body.userData=="ball":
+		elif fixB.body.userData[:20]=='static_conveyor_belt':# or fixB.body.userData=="ball":
 			contact.tangentSpeed = -5.0
 			
 	return
@@ -279,7 +279,7 @@ def event_handler():
 # Create Box2D bodies
 def createLevelBodies():
 	global world,currentLevel,mouseJoint
-	currentLevel=2
+#	currentLevel=2
 	mouseJoint=False
 	for body in world.bodies: # Clear world of all bodies
 		world.DestroyBody(body)
@@ -293,6 +293,7 @@ def createLevelBodies():
 		position=(0,1),
 		shapes=polygonShape(box=(50,1)),
 		density=0.0,
+		friction=3.0,
 		userData='ground'
 		)
 	fileName = 'level'+str(currentLevel)+'.txt'

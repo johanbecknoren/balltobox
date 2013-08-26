@@ -10,15 +10,54 @@ dynamic_ball=world.CreateDynamicBody(
 dynamic_ball.CreateCircleFixture(
 	radius=1.0, 
 	friction=0.1,
-	density=3.0, 
+	density=2.0, 
 	restitution=0.3)
 	
+# Level goal static body
+static_goal=world.CreateStaticBody(
+	position=(25,10),
+	angle=toRad(210),
+	shapes=polygonShape(box=(0.1,2)),
+	density=0.0,
+	userData='goal',
+	)
+	
 static_conveyor_belt_1=world.CreateStaticBody(
-	position=(9,14),
+	position=(9,18),
 	angle=toRad(0),
 	shapes=polygonShape(box=(10,0.5)),
 	density=0.0,
+	friction=1.0,
 	userData='static_conveyor_belt_1')
+
+static_conveyor_belt_2=world.CreateStaticBody(
+	position=(20,14),
+	angle=toRad(20),
+	shapes=polygonShape(box=(7,0.5)),
+	density=0.0,
+	friction=1.0,
+	userData='static_conveyor_belt_2')
+	
+dynamic_obstacle2=world.CreateDynamicBody(
+	position=(15,6),
+	angle=toRad(-45),
+	userData='dynamic_obstacle_2',
+	)
+box=dynamic_obstacle2.CreatePolygonFixture(
+	box=(2,0.2),
+	density=2,
+	friction=1.0,
+	restitution=1.5)
+prismaticJoint2 = world.CreatePrismaticJoint(
+	bodyA=ground_body,
+	bodyB=dynamic_obstacle2,
+	anchor=(0,1),
+	axis=(1,0),
+	maxMotorForce=100,
+	enableMotor=False,
+	lowerTranslation=-10,
+	upperTranslation=10,
+	enableLimit=True)
 	
 	# Skapa drös med småboxar
 numGravel = 20
@@ -26,7 +65,7 @@ i=0
 while i <= numGravel:
 	
 	gravelBody=world.CreateDynamicBody(
-	position=(5+i*0.5,15),
+	position=(12+i*0.5,20),
 	angle=0,
 	userData='gravel'+str(i),
 	shape=circleShape(radius=0.2)
