@@ -22,19 +22,16 @@ from menu import *	# menu_key module from pygame.org/project-menu_key-2278-.html
 import simplejson as json
 import StringIO
 
-#from helper_functions import *
-
 if not pygame.font: print "Warning, fonts disabled."
 if not pygame.mixer: print "Warning, sound disabled."
 
 # --- constants ---
-# Box2D deals with meters, but we want to display pixels, 
-# so define a conversion factor:
-PPM=20.0 # pixels per meter
+# Box2D works in meters, we transform meters to pixels, 
+PPM=20.0 # Pixel-per-meter conversion factor
 TARGET_FPS=60
 TIME_STEP=1.0/TARGET_FPS
 SCREEN_WIDTH, SCREEN_HEIGHT=640,480
-vel_iters, pos_iters = 10, 10
+#vel_iters, pos_iters = 10, 10
 
 # --- pygame setup ---
 pygame.init()
@@ -142,7 +139,7 @@ def runMenu():
 					menu.draw(1) #here is the Menu class function
 				if event.key == K_RETURN:
 					if menu.get_position() == 0:
-						print 'Start the game!'
+						# Start the game
 						pauseSimulation = 0
 						displayMenu=False # Deactivate menu
 						displayInstructions=False 
@@ -150,13 +147,12 @@ def runMenu():
 						screen.fill((0,0,0,0)) # Blank screen
 						return	# Exit menu function
 					elif menu.get_position() == 1:
-						print 'Show game instructions!'
+						# Show game instructions!
 						runInstructions()
-					elif menu.get_position() == 2:#here is the Menu class function
+					elif menu.get_position() == 2:
 						pygame.display.quit()
 						sys.exit()                        
 				if event.key == K_ESCAPE:
-					print "ESC, caught in menu event"
 					if displayInstructions == False:
 						pygame.display.quit()
 						sys.exit()
@@ -457,16 +453,13 @@ def main():
 	global currentLevel
 	
 	# Show game menu
-	print "Init Menu"
 	initMenu()
-	print "Starting menu"
 	runMenu()
 	
 	# Show game intro
-	print "Running game intro"
 	runIntro()
 	
-	print "Loading level.."
+	# Load first level
 	loadLevel()
 
 	# Main game loop
@@ -478,7 +471,7 @@ def main():
 
 		# Check ball-goal collision/contact (level completed)
 		if checkContacts()=='goal':
-			print 'Gooooll!'
+			# Red ball in goal
 			flipswitch=0
 			currentLevel+=1
 			loadLevel()
