@@ -58,6 +58,7 @@ displayOutro=False # Boolean for showing outro when closing game
 theMouseJoint = ""	# Mousejoint for grabbing dynamic objects (as b2MouseJoint later)
 mouseJoint = False  # bool that tells if a mouse joint is active
 totalPoints=0
+levelPoints=0
 colors = {
     staticBody  : (190,190,190,255),
     dynamicBody : (0,200,200,255),
@@ -128,7 +129,7 @@ def runMenu():
 	textpos=(SCREEN_WIDTH/2-text.get_rect().centerx, 100)
 	screen.blit(text,textpos)
 	
-	pygame.key.set_repeat(199,69)#(delay,interval)
+	pygame.key.set_repeat(199,69)
 	pygame.display.update()
 	while 1:
 		for event in pygame.event.get():
@@ -185,7 +186,6 @@ def runIntro():
 		while introFrameCounter<=120:
 			pygame.display.flip()
 			introFrameCounter=introFrameCounter+1
-	print 'Intro'
 
 def runInstructions():
 	global screen,displayInstructions
@@ -229,7 +229,7 @@ def runOutro():
 		screen.fill((51,51,51,0))
 		
 		font=pygame.font.Font(None, 48)
-		text=font.render("FINAL SCORE: "+str(totalPoints),1,(255,0,0,255))
+		text=font.render("FINAL SCORE: "+str(totalPoints+levelPoints),1,(255,0,0,255))
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2-50)
 		screen.blit(text,textpos)
 		
@@ -248,14 +248,13 @@ def runOutro():
 			pygame.display.flip()
 			outroCounter=outroCounter+1
 		
+		# Restart game
 		currentLevel=1
-		runMenu()	
-		#pygame.display.quit()
-		#sys.exit() 
+		runMenu()
 	
 # Check for collisions between specific objects
 def checkContacts():
-	global world, totalPoints
+	global world, levelPoints
 	
 	# Check of collisions (contacts)
 	for contact in world.contacts:
@@ -264,17 +263,16 @@ def checkContacts():
 		# Check if ball reached goal.
 		if fixA.body.userData=='ball' or fixB.body.userData=='ball':
 			if fixA.body.userData=='goal' or fixB.body.userData=='goal':
-				totalPoints = totalPoints+20
+				levelPoints = levelPoints+20
 				return 'goal'
 		# Add points for gravel objects reaching goal, tag gravel for destruction
 		if fixA.body.userData=='goal' or fixB.body.userData=='goal':
 			if fixA.body.userData[:6]=='gravel' or fixB.body.userData[:6]=='gravel':
-				totalPoints = totalPoints+1
+				levelPoints = levelPoints+1
 				if fixA.body.userData[:6]=='gravel':
 					for b in bodies:
 						if b.userData == fixA.body.userData:
 							bodiesToKill.append(b)
-					print 'Destroying fixA.body'
 				elif fixB.body.userData[:6]=='gravel':
 					for b in world.bodies:
 						if b.userData == fixB.body.userData:
@@ -303,14 +301,12 @@ def checkContacts():
 	
 # Handle keyboard and mouse events from pygame
 def event_handler():
-	global running,pauseSimulation,dynamicBodies,staticBodies,theMouseJoint,mouseJoint
+	global running,pauseSimulation,dynamicBodies,staticBodies,theMouseJoint,mouseJoint,levelPoints
 	
 	# Keyboard events
 	for event in pygame.event.get():
 		if event.type==QUIT or (event.type==KEYUP and event.key==K_ESCAPE):
-			print "ESC, caught in main event handler"
 			# User closed the window or pressed escape
-			##running=False
 			pauseSimulation = 1
 			runMenu()
 		elif event.type==KEYDOWN and event.key==K_p:
@@ -321,6 +317,7 @@ def event_handler():
 				pauseSimulation = 1
 		elif event.type==KEYDOWN and event.key==K_r:
 			# Reset current level
+			levelPoints=0
 			loadLevel()
 				
 		if event.type==MOUSEBUTTONDOWN:
@@ -363,11 +360,20 @@ def event_handler():
 
 # Create Box2D bodies
 def createLevelBodies():
-	global world,currentLevel,mouseJoint
+	global world,currentLevel,mouseJoint,totalPoints,levelPoints
+	
 #	currentLevel=3
+	if currentLevel == 1:
+		totalPoints=0
 	if currentLevel >=4 :
 		runOutro()
+		
+	totalPoints=totalPoints + levelPoints
+	
+	levelPoints=0
+		
 	mouseJoint=False
+	
 	for body in world.bodies: # Clear world of all bodies
 		world.DestroyBody(body)
 	for joint in world.joints:# Clear world of all joints
@@ -383,6 +389,8 @@ def createLevelBodies():
 		friction=3.0,
 		userData='ground'
 		)
+		
+	# Load Box2D level bodies from text file
 	fileName = 'level'+str(currentLevel)+'.txt'
 	levelFile = open(fileName).read()
 	exec levelFile
@@ -390,13 +398,16 @@ def createLevelBodies():
 def loadLevel():
 	global currentLevel
 	createLevelBodies()
+	
 	# Store bodies in separate containers for static/dynamic
 	for body in world.bodies:
 		if body.type==staticBody:
 			addStaticBodyToContainer(body)
 		elif body.type==dynamicBody:
 			addDynamicBodyToContainer(body)
+			
 	screen.fill((51,51,51,255))
+	
 	if pygame.font:
 		font=pygame.font.Font(None,36)
 		text=font.render("Level "+str(currentLevel),1,(255,255,255,255))
@@ -410,8 +421,7 @@ def loadLevel():
 	
 	
 def drawGameOptions():
-	global screen
-	global SCREEN_WIDTH, SCREEN_HEIGHT
+	global screen, SCREEN_WIDTH, SCREEN_HEIGHT,totalPoints,levelPoints
 	if pygame.font:
 		fontsize=18
 		font=pygame.font.Font(None, fontsize)
@@ -434,7 +444,7 @@ def drawGameOptions():
 		screen.blit(text, textpos)
 		
 		font=pygame.font.Font(None, 36)
-		text=font.render('Score: '+str(totalPoints),1,(255,255,255,255))
+		text=font.render('Score: '+str(levelPoints+totalPoints),1,(255,255,255,255))
 		textpos=(SCREEN_WIDTH-150,46)
 		screen.blit(text,textpos)
 	
@@ -482,8 +492,7 @@ def main():
 		screen.fill((0,0,0,0))
 		
 		drawGameOptions() # Draw keyboard bindings, level, score etc.
-		
-					
+						
 		for body in (world.bodies): # all bodies in world
 			# The body gives us the position and angle of its shapes
 			for fixture in body.fixtures:

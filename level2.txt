@@ -40,7 +40,7 @@ static_conveyor_belt_2=world.CreateStaticBody(
 	
 dynamic_obstacle2=world.CreateDynamicBody(
 	position=(15,6),
-	angle=toRad(-45),
+	angle=toRad(-55),
 	userData='dynamic_obstacle_2',
 	)
 box=dynamic_obstacle2.CreatePolygonFixture(
