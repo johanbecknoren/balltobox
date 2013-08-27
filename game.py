@@ -21,7 +21,6 @@ from pygame.locals import *
 from Box2D.b2 import *
 from Box2D import *
 from menu import *	# menu_key module from pygame.org/project-menu_key-2278-.html
-import simplejson as json
 import StringIO
 
 if not pygame.font: print "Warning, fonts disabled."
@@ -50,7 +49,6 @@ world=world(gravity=(0,-9.82),doSleep=True)
 
 # --- Game variables ---
 menu = Menu()
-introFrames = 2*TARGET_FPS # Show intro for 2 seconds
 pauseSimulation = 0 # Boolean to pause Box2d physics simulation
 running=True	# Main game loop
 displayMenu=True	# Boolean for showing menu
@@ -90,7 +88,7 @@ def clearDynamicBodyContainer():
 	global dynamicBodies
 	dynamicBodies = []
 	
-# Bodies to be killed between each time step
+# Bodies tagged to be killed between each time step
 def killBodies():
 	global bodiesToKill,mouseJoint
 	prevMouseJoint=mouseJoint
@@ -102,7 +100,7 @@ def killBodies():
 		
 	mouseJoint=prevMouseJoint
 		
-# Convert degree to radian
+# Convert degree to radian, Box2D uses radian angles
 def toRad(degree):
 	return degree*(3.1415/180.0)
 
@@ -429,7 +427,7 @@ def loadLevel():
 	global currentLevel
 	createLevelBodies()
 	
-	# Store bodies in separate containers for static/dynamic
+	# Store bodies in separate containers for static/dynamic types
 	for body in world.bodies:
 		if body.type==staticBody:
 			addStaticBodyToContainer(body)
@@ -457,10 +455,7 @@ def main():
 	global TIME_STEP
 	global PPM
 	global running
-	global background
-	global introFrames
-	global pauseSimulation	# Boolean for pausing box2d simulation	
-	global menu
+	global pauseSimulation	# Boolean for pausing box2d simulation
 	global currentLevel
 	
 	# Init and show game menu
@@ -487,7 +482,6 @@ def main():
 			loadLevel()
 		
 		# --- Draw the world ---
-		
 		# Clear the screen
 		screen.fill((0,0,0,0))
 		
