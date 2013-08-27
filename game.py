@@ -2,11 +2,13 @@
 #!/usr/bin/python2.7
 
 """
- Projekt, IB910C - S
+ 2013-08-27
+ Ball-in-box, Projekt, IB910C - S
  Johan Beck-Norén, jobe4452
  Ubuntu 12.10
  Python 2.7
-External modules used not written by me:
+ 
+ External modules used not written by me:
  	pygame
  	pyBox2D
  	menu_key (slightly modified by me)
@@ -31,7 +33,6 @@ PPM=20.0 # Pixel-per-meter conversion factor
 TARGET_FPS=60
 TIME_STEP=1.0/TARGET_FPS
 SCREEN_WIDTH, SCREEN_HEIGHT=640,480
-#vel_iters, pos_iters = 10, 10
 
 # --- pygame setup ---
 pygame.init()
@@ -99,8 +100,6 @@ def killBodies():
 		
 	bodiesToKill = []
 	mouseJoint=prevMouseJoint
-	
-		
 		
 # Convert degree to radian
 def toRad(degree):
@@ -251,12 +250,41 @@ def runOutro():
 		# Restart game
 		currentLevel=1
 		runMenu()
+
+# Draw current level, score etc. during gameplay
+def drawGameOptions():
+	global screen, SCREEN_WIDTH, SCREEN_HEIGHT,totalPoints,levelPoints
+	if pygame.font:
+		fontsize=18
+		font=pygame.font.Font(None, fontsize)
+		
+		text=font.render("P - Pause Game",1,(255,255,255,255))
+		textpos=(10,10)
+		screen.blit(text, textpos)
+		
+		text=font.render("R - Reset Level", 1, (255,255,255,255))
+		textpos=(10,10+fontsize)
+		screen.blit(text, textpos)
+		
+		text=font.render("Esc - Game Menu", 1, (255,255,255,255))
+		textpos=(10,10+2*fontsize)
+		screen.blit(text, textpos)
+		
+		font=pygame.font.Font(None, 36)
+		text=font.render("Level "+str(currentLevel),1,(255,0,0,255))
+		textpos=(SCREEN_WIDTH-100, 10)
+		screen.blit(text, textpos)
+		
+		font=pygame.font.Font(None, 36)
+		text=font.render('Score: '+str(levelPoints+totalPoints),1,(255,255,255,255))
+		textpos=(SCREEN_WIDTH-150,46)
+		screen.blit(text,textpos)
 	
 # Check for collisions between specific objects
 def checkContacts():
 	global world, levelPoints
 	
-	# Check of collisions (contacts)
+	# Check for collisions (contacts)
 	for contact in world.contacts:
 		fixA = contact.fixtureA
 		fixB = contact.fixtureB
@@ -362,16 +390,13 @@ def event_handler():
 def createLevelBodies():
 	global world,currentLevel,mouseJoint,totalPoints,levelPoints
 	
-#	currentLevel=3
 	if currentLevel == 1:
 		totalPoints=0
 	if currentLevel >=4 :
 		runOutro()
 		
-	totalPoints=totalPoints + levelPoints
-	
-	levelPoints=0
-		
+	totalPoints=totalPoints + levelPoints # Save total points from previous level
+	levelPoints=0 # Reset points for new level
 	mouseJoint=False
 	
 	for body in world.bodies: # Clear world of all bodies
@@ -419,35 +444,6 @@ def loadLevel():
 			pygame.display.flip()
 			levelIntroCounter=levelIntroCounter+1
 	
-	
-def drawGameOptions():
-	global screen, SCREEN_WIDTH, SCREEN_HEIGHT,totalPoints,levelPoints
-	if pygame.font:
-		fontsize=18
-		font=pygame.font.Font(None, fontsize)
-		
-		text=font.render("P - Pause Game",1,(255,255,255,255))
-		textpos=(10,10)
-		screen.blit(text, textpos)
-		
-		text=font.render("R - Reset Level", 1, (255,255,255,255))
-		textpos=(10,10+fontsize)
-		screen.blit(text, textpos)
-		
-		text=font.render("Esc - Game Menu", 1, (255,255,255,255))
-		textpos=(10,10+2*fontsize)
-		screen.blit(text, textpos)
-		
-		font=pygame.font.Font(None, 36)
-		text=font.render("Level "+str(currentLevel),1,(255,0,0,255))
-		textpos=(SCREEN_WIDTH-100, 10)
-		screen.blit(text, textpos)
-		
-		font=pygame.font.Font(None, 36)
-		text=font.render('Score: '+str(levelPoints+totalPoints),1,(255,255,255,255))
-		textpos=(SCREEN_WIDTH-150,46)
-		screen.blit(text,textpos)
-	
 # --- main function ---
 def main():
 	global world # Box2D world object
@@ -462,7 +458,7 @@ def main():
 	global menu
 	global currentLevel
 	
-	# Show game menu
+	# Init and show game menu
 	initMenu()
 	runMenu()
 	
@@ -474,12 +470,11 @@ def main():
 
 	# Main game loop
 	while running:
-		
-		
-		#Check the event queue
+				
+		#Check the pygame event queue
 		event_handler()
 
-		# Check ball-goal collision/contact (level completed)
+		# Check ball->goal collision/contact (level completed)
 		if checkContacts()=='goal':
 			# Red ball in goal
 			flipswitch=0
@@ -500,7 +495,7 @@ def main():
 				# and also the shape.
 				shape=fixture.shape
 				
-				# Draw the circular ball shape
+				# Draw the circular ball shape for red ball and white gravel
 				if body.userData=='ball':
 					pygame.draw.circle(
 						screen, (255,0,0,255),
@@ -516,20 +511,13 @@ def main():
 						int(shape.radius*PPM),
 						0)
 				else:
-					# Naively assume that this is a polygon shape. (not good normally!)
-				    # We take the body's transform and multiply it with each 
-				    # vertex, and then convert from meters to pixels with the scale
-				    # factor.
+				    # Multiply body transform with each shape vertex, using PPM scaling factor
 				    vertices=[(body.transform*v)*PPM for v in shape.vertices]
 				    
-				    # But wait! It's upside-down! Pygame and Box2D orient their
-				    # axes in different ways. Box2D is just like how you learned
-				    # in high school, with positive x and y directions going
-				    # right and up. Pygame, on the other hand, increases in the
-				    # right and downward directions. This means we must flip
-				    # the y components.
+				    # Flip Y-coord since pygame and box2d define them in opposite directions
 				    vertices=[(v[0], SCREEN_HEIGHT-v[1]) for v in vertices]
 				    
+				    # Draw block (polygon) shapes
 				    if body.userData=='goal':
 				    	pygame.draw.polygon(screen, (0,255,0,255), vertices, 0)
 				    elif body.type==dynamicBody:
