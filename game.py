@@ -99,6 +99,7 @@ def killBodies():
 		world.DestroyBody(b)
 		
 	bodiesToKill = []
+		
 	mouseJoint=prevMouseJoint
 		
 # Convert degree to radian
@@ -329,7 +330,9 @@ def checkContacts():
 	
 # Handle keyboard and mouse events from pygame
 def event_handler():
-	global running,pauseSimulation,dynamicBodies,staticBodies,theMouseJoint,mouseJoint,levelPoints
+	global running,pauseSimulation
+	global dynamicBodies,staticBodies,theMouseJoint
+	global mouseJoint,levelPoints
 	
 	# Keyboard events
 	for event in pygame.event.get():
@@ -389,11 +392,13 @@ def event_handler():
 # Create Box2D bodies
 def createLevelBodies():
 	global world,currentLevel,mouseJoint,totalPoints,levelPoints
-	
+#	currentLevel=3
 	if currentLevel == 1:
 		totalPoints=0
+		levelPoints=0
 	if currentLevel >=4 :
 		runOutro()
+		return
 		
 	totalPoints=totalPoints + levelPoints # Save total points from previous level
 	levelPoints=0 # Reset points for new level
