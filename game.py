@@ -35,7 +35,6 @@ SCREEN_WIDTH, SCREEN_HEIGHT=640,480
 
 # --- pygame setup ---
 pygame.init()
-pygame.init()
 screen=pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT), 0, 32)
 pygame.display.set_caption('Ball-in-box')
 background=pygame.Surface(screen.get_size())
@@ -180,10 +179,11 @@ def runIntro():
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2+50)
 		screen.blit(text, textpos)
 		
-		introFrameCounter=0
-		while introFrameCounter<=120:
-			pygame.display.flip()
-			introFrameCounter=introFrameCounter+1
+#		introFrameCounter=0
+#		while introFrameCounter<=120:
+		pygame.display.flip()
+		pygame.time.wait(2000)
+#			introFrameCounter=introFrameCounter+1
 
 def runInstructions():
 	global screen,displayInstructions
@@ -241,10 +241,8 @@ def runOutro():
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2+50)
 		screen.blit(text,textpos)
 		
-		outroCounter=0
-		while outroCounter<=240:
-			pygame.display.flip()
-			outroCounter=outroCounter+1
+		pygame.display.flip()
+		pygame.time.wait(4000)
 		
 		# Restart game
 		currentLevel=1
@@ -442,10 +440,8 @@ def loadLevel():
 		textpos=text.get_rect(centerx=SCREEN_WIDTH/2, centery=SCREEN_HEIGHT/2)
 		screen.blit(text,textpos)
 		
-		levelIntroCounter=0
-		while levelIntroCounter<=120:
-			pygame.display.flip()
-			levelIntroCounter=levelIntroCounter+1
+		pygame.display.flip()
+		pygame.time.wait(2000)
 	
 # --- main function ---
 def main():
